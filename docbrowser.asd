@@ -8,7 +8,8 @@
     :author "Elias Martenson <lokedhs@gmail.com>"
     :license "BSD"
     :description "Documentation browser for SBCL"
-    :depends-on (:hunchentoot)
+    :depends-on (:hunchentoot
+                 :bordeaux-threads)
     :components ((:module src
                           :serial t
                           :components ((:file "package")

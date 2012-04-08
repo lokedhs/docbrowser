@@ -14,4 +14,7 @@
                           :serial t
                           :components ((:file "package")
                                        (:file "server")
-                                       (:file "docbrowser")))))
+                                       (:file "docbrowser")))
+                 (:module template
+                          :serial t
+                          :components ((:file "template")))))

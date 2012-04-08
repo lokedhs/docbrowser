@@ -1,9 +1,6 @@
-(in-package :docbrowser)
+(in-package :template)
 
 (declaim #.*compile-decl*)
-
-#+nil(cl-lex:define-string-lexer stream-template-lexer
-       (""))
 
 (defvar *begin-code* "<%")
 (defvar *end-code* "%>")

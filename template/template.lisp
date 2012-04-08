@@ -1,4 +1,4 @@
-(in-package :docbrowser)
+(in-package :template)
 
 (declaim #.*compile-decl*)
 

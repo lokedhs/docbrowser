@@ -9,7 +9,8 @@
     :license "BSD"
     :description "Documentation browser for SBCL"
     :depends-on (:hunchentoot
-                 :bordeaux-threads)
+                 :bordeaux-threads
+                 :yacc)
     :components ((:module src
                           :serial t
                           :components ((:file "package")
@@ -17,4 +18,6 @@
                                        (:file "docbrowser")))
                  (:module template
                           :serial t
-                          :components ((:file "template")))))
+                          :components ((:file "template-package")
+                                       (:file "template")
+                                       (:file "parser")))))

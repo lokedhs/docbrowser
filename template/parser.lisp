@@ -6,13 +6,16 @@
 (defvar *end-code* "%>")
 
 (defun make-stream-template-lexer (input-stream)
-  (let ((lexer-actions `(("^ +" ,(constantly :blank))
+  (let ((lexer-actions `(("^[ \\n]+" ,(constantly :blank))
                          ("^if" ,(constantly (list 'if nil)))
                          ("^endif" ,(constantly (list 'endif nil)))
+                         ("^while" ,(constantly (list 'while nil)))
+                         ("^endwhile" ,(constantly (list 'endwhile nil)))
+                         ("^," ,(constantly (list '|,| nil)))
                          ("^([a-zA-Z_][a-zA-Z_0-9]*)" ,#'(lambda (exprs) (list 'symbol (aref exprs 0))))
                          ("^\"([^\"]*)\"" ,#'(lambda (exprs) (list 'string (aref exprs 0))))))
         (state :template)
-        (current-line nil)
+        (current-line (read-line input-stream nil nil))
         (current-position 0))
 
     #'(lambda ()
@@ -30,36 +33,41 @@
                            (list 'template result)))))
 
                  (read-code ()
-                   (loop
-                      with longest-match-length = 0
-                      with longest-match-exprs = nil
-                      with longest-match-action = nil
-                      for (regex action) in lexer-actions
-                      when (and (> (length current-line)
-                                   (+ current-position (length *end-code*)))
-                                (string= (subseq current-line current-position (+ current-position (length *end-code*)))
-                                         *end-code*))
-                      do (progn
-                           (incf current-position (length *end-code*))
-                           (setq state :template)
-                           :blank)
-                      do (multiple-value-bind (result exprs)
-                             (cl-ppcre:scan-to-strings regex current-line :start current-position)
-                           (when (and result
-                                      (> (length result) longest-match-length))
-                             (setq longest-match-length (length result))
-                             (setq longest-match-exprs exprs)
-                             (setq longest-match-action action)))
-                      finally (if (plusp longest-match-length)
-                                  (progn
-                                    (incf current-position longest-match-length)
-                                    (return (funcall longest-match-action longest-match-exprs)))
-                                  (error "unmached string"))))
+                   (if (and (>= (length current-line)
+                                (+ current-position (length *end-code*)))
+                            (string= (subseq current-line current-position (+ current-position (length *end-code*)))
+                                     *end-code*))
+                       ;; End code was found
+                       (progn
+                         (incf current-position (length *end-code*))
+                         (setq state :template)
+                         :blank)
+                       ;; No end code found, check the actions
+                       (loop
+                          with longest-match-length = 0
+                          with longest-match-exprs = nil
+                          with longest-match-action = nil
+                          for (regex action) in lexer-actions                      
+                          do (multiple-value-bind (result exprs)
+                                 (cl-ppcre:scan-to-strings regex current-line :start current-position)
+                               (when (and result
+                                          (> (length result) longest-match-length))
+                                 (setq longest-match-length (length result))
+                                 (setq longest-match-exprs exprs)
+                                 (setq longest-match-action action)))
+                          finally (if (plusp longest-match-length)
+                                      (progn
+                                        (incf current-position longest-match-length)
+                                        (return (funcall longest-match-action longest-match-exprs)))
+                                      (error "unmached string: ~s" (subseq current-line current-position))))))
 
                  (parse-token ()
-                   (when (or (null current-line)
-                             (> current-position (length current-line)))
-                     (setq current-line (read-line input-stream nil nil)))
+                   (loop
+                      while (and current-line
+                                 (>= current-position (length current-line)))
+                      do (progn
+                           (setq current-line (read-line input-stream nil nil))
+                           (setq current-position 0)))
                    (if (null current-line)
                        ;; No more to read, simply return NIL
                        nil
@@ -74,9 +82,17 @@
              unless (eq token :blank)
              return (apply #'values token))))))
 
+(defun debug-lexer (string)
+  (with-input-from-string (s string)
+    (let ((lex (make-stream-template-lexer s)))
+      (loop
+         for (a b) = (multiple-value-list (funcall lex))
+         while a
+         do (format t "~s ~s~%" a b)))))
+
 (yacc:define-parser *template-parser*
   (:start-symbol document)
-  (:terminals (template symbol string if endif))
+  (:terminals (template symbol string if endif while endwhile |,|))
 
   (document
    (document-nodes #'(lambda (doc) `(progn ,@doc))))
@@ -89,7 +105,11 @@
    (template #'(lambda (v) `(print ,v)))
    (if expression document-nodes endif #'(lambda (v1 expr document v4)
                                            (declare (ignore v1 v4))
-                                           `(if ,expr (progn ,@document)))))
+                                           `(if ,expr (progn ,@document))))
+
+   (while expression document-nodes endwhile #'(lambda (v1 expr document v4)
+                                                 (declare (ignore v1 v4))
+                                                 `(loop while ,expr do (progn ,@document)))))
 
   (expression
    (symbol #'(lambda (v) `(gethash ,v *current-arguments-context*))))

@@ -37,8 +37,9 @@
                  (read-code ()
                    (if (and (>= (length current-line)
                                 (+ current-position (length *end-code*)))
-                            (string= (subseq current-line current-position (+ current-position (length *end-code*)))
-                                     *end-code*))
+                            (string= current-line *end-code*
+                                     :start1 current-position
+                                     :end1 (+ current-position (length *end-code*))))
                        ;; End code was found
                        (progn
                          (incf current-position (length *end-code*))
@@ -91,7 +92,7 @@
 
           (loop
              for token = (parse-token)
-             if (null token) return nil
+             while token
              unless (eq token :blank)
              return (apply #'values token))))))
 
@@ -106,6 +107,7 @@
 (yacc:define-parser *template-parser*
   (:start-symbol document)
   (:terminals (template symbol string if end while repeat |,| number))
+  (:precedence ((:right template)))
 
   (document
    (document-nodes #'(lambda (doc) `(progn ,@doc))))
@@ -114,8 +116,12 @@
    (document-node document-nodes #'(lambda (n rest) (append (list n) rest)))
    nil)
 
+  (template-list
+   (template template-list #'(lambda (v1 v2) (concatenate 'string v1 v2)))
+   template)
+
   (document-node
-   (template #'(lambda (v) `(princ ,v stream)))
+   (template-list #'(lambda (v) `(princ ,v stream)))
 
    (if expression document-nodes end #'(lambda (v1 expr document v4)
                                          (declare (ignore v1 v4))
@@ -136,11 +142,13 @@
    (number #'identity))
   )
 
+(defun parse-stream-to-form (stream)
+  (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*))
+
 (defun parse-template-by-stream (stream)
-  (let* ((template-form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*))
+  (let* ((template-form (parse-stream-to-form stream))
          (name (gensym)))
-    (eval `(defun ,name (data stream)
-             (declare (ignorable data stream))
-             ,template-form))
-    (compile name)
+    (compile name `(lambda (data stream)
+                     (declare (ignorable data stream))
+                     ,template-form))
     (symbol-function name)))

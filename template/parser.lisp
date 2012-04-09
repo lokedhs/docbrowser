@@ -8,12 +8,13 @@
 (defun make-stream-template-lexer (input-stream)
   (let ((lexer-actions `(("^[ \\n]+" ,(constantly :blank))
                          ("^if" ,(constantly (list 'if nil)))
-                         ("^endif" ,(constantly (list 'endif nil)))
+                         ("^end" ,(constantly (list 'end nil)))
                          ("^while" ,(constantly (list 'while nil)))
-                         ("^endwhile" ,(constantly (list 'endwhile nil)))
+                         ("^repeat" ,(constantly (list 'repeat nil)))
                          ("^," ,(constantly (list '|,| nil)))
                          ("^([a-zA-Z_][a-zA-Z_0-9]*)" ,#'(lambda (exprs) (list 'symbol (aref exprs 0))))
-                         ("^\"([^\"]*)\"" ,#'(lambda (exprs) (list 'string (aref exprs 0))))))
+                         ("^\"([^\"]*)\"" ,#'(lambda (exprs) (list 'string (aref exprs 0))))
+                         ("^([0-9]+)" ,#'(lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
         (state :template)
         (current-line nil)
         (current-position 0)
@@ -104,7 +105,7 @@
 
 (yacc:define-parser *template-parser*
   (:start-symbol document)
-  (:terminals (template symbol string if endif while endwhile |,|))
+  (:terminals (template symbol string if end while repeat |,| number))
 
   (document
    (document-nodes #'(lambda (doc) `(progn ,@doc))))
@@ -114,15 +115,32 @@
    nil)
 
   (document-node
-   (template #'(lambda (v) `(print ,v)))
-   (if expression document-nodes endif #'(lambda (v1 expr document v4)
-                                           (declare (ignore v1 v4))
-                                           `(if ,expr (progn ,@document))))
+   (template #'(lambda (v) `(princ ,v stream)))
 
-   (while expression document-nodes endwhile #'(lambda (v1 expr document v4)
-                                                 (declare (ignore v1 v4))
-                                                 `(loop while ,expr do (progn ,@document)))))
+   (if expression document-nodes end #'(lambda (v1 expr document v4)
+                                         (declare (ignore v1 v4))
+                                         `(if ,expr (progn ,@document))))
+
+   (while expression document-nodes end #'(lambda (v1 expr document v4)
+                                            (declare (ignore v1 v4))
+                                            `(loop while ,expr do (progn ,@document))))
+
+   (repeat number-expr document-nodes end #'(lambda (v1 number document v4)
+                                              (declare (ignore v1 v4))
+                                              `(loop repeat ,number do (progn ,@document)))))
 
   (expression
    (symbol #'(lambda (v) `(gethash ,v *current-arguments-context*))))
+
+  (number-expr
+   (number #'identity))
   )
+
+(defun parse-template-by-stream (stream)
+  (let* ((template-form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*))
+         (name (gensym)))
+    (eval `(defun ,name (data stream)
+             (declare (ignorable data stream))
+             ,template-form))
+    (compile name)
+    (symbol-function name)))

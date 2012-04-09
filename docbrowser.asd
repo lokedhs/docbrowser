@@ -10,7 +10,8 @@
     :description "Documentation browser for SBCL"
     :depends-on (:hunchentoot
                  :bordeaux-threads
-                 :yacc)
+                 :yacc
+                 :parse-number)
     :components ((:module src
                           :serial t
                           :components ((:file "package")

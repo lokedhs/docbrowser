@@ -15,8 +15,9 @@
                          ("^([a-zA-Z_][a-zA-Z_0-9]*)" ,#'(lambda (exprs) (list 'symbol (aref exprs 0))))
                          ("^\"([^\"]*)\"" ,#'(lambda (exprs) (list 'string (aref exprs 0))))))
         (state :template)
-        (current-line (read-line input-stream nil nil))
-        (current-position 0))
+        (current-line nil)
+        (current-position 0)
+        (input-finish nil))
 
     #'(lambda ()
         (labels ((read-template ()
@@ -24,7 +25,7 @@
                      (if (null pos)
                          ;; no start code on this line, return the entire line
                          (let ((result (subseq current-line current-position)))
-                           (setq current-line nil)
+                           (setq current-position (length current-line))
                            (list 'template result))
                          ;; start code found, return the prefix and switch state
                          (let ((result (subseq current-line current-position pos)))
@@ -61,20 +62,31 @@
                                         (return (funcall longest-match-action longest-match-exprs)))
                                       (error "unmached string: ~s" (subseq current-line current-position))))))
 
+                 (read-next-line ()
+                   (unless input-finish
+                     (setq current-line (read-line input-stream nil nil))
+                     (setq current-position 0)
+                     (if current-line
+                         :blank
+                         (progn
+                           (setq input-finish t)
+                           nil))))
+
                  (parse-token ()
-                   (loop
-                      while (and current-line
-                                 (>= current-position (length current-line)))
-                      do (progn
-                           (setq current-line (read-line input-stream nil nil))
-                           (setq current-position 0)))
-                   (if (null current-line)
-                       ;; No more to read, simply return NIL
-                       nil
-                       ;; Else, check the current parser state
-                       (ecase state
-                         (:template (read-template))
-                         (:code (read-code))))))
+                   (cond ((null current-line)
+                          (read-next-line))
+                         ((>= current-position (length current-line))
+                          (if (eq state :template)
+                              ;; If processing the template part, return a newline
+                              (progn
+                                (read-next-line)
+                                (list 'template (string #\Newline)))
+                              ;; Else, simply process the next line
+                              (read-next-line)))
+                         (t
+                          (ecase state
+                            (:template (read-template))
+                            (:code (read-code)))))))
 
           (loop
              for token = (parse-token)

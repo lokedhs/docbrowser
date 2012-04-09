@@ -39,6 +39,9 @@
                        (ecase state
                          (:template (read-template))
                          (:code (loop
+                                   with longest-match-length = 0
+                                   with longest-match-exprs = nil
+                                   with longest-match-action = nil
                                    for (regex action) in lexer-actions
                                    when (and (> (length current-line)
                                                 (+ current-position (length *end-code*)))
@@ -50,10 +53,16 @@
                                         :blank)
                                    do (multiple-value-bind (result exprs)
                                           (cl-ppcre:scan-to-strings regex current-line :start current-position)
-                                        (when result
-                                          (incf current-position (length result))
-                                          (return (funcall action exprs))))
-                                   finally (error "unmached string")))))))
+                                        (when (and result
+                                                   (> (length result) longest-match-length))
+                                          (setq longest-match-length (length result))
+                                          (setq longest-match-exprs exprs)
+                                          (setq longest-match-action action)))
+                                   finally (if (plusp longest-match-length)
+                                               (progn
+                                                 (incf current-position longest-match-length)
+                                                 (return (funcall longest-match-action longest-match-exprs)))
+                                               (error "unmached string"))))))))
 
           (loop
              for token = (parse-token)

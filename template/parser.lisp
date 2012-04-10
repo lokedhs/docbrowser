@@ -132,6 +132,8 @@
          while a
          do (format t "~s ~s~%" a b)))))
 
+(defpackage :template-parse)
+
 (defun string->symbol (symbol-name &optional (package *package*))
   (intern (string-upcase (string symbol-name)) package))
 
@@ -210,7 +212,7 @@
   )
 
 (defun parse-stream-to-form (stream)
-  (let ((*package* (make-package (gensym))))
+  (let ((*package* (find-package :template-parse)))
     (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
 
 (defun parse-template-by-stream (stream)

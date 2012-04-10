@@ -4,21 +4,21 @@
 (in-package :docbrowser-system)
 
 (defsystem docbrowser
-    :name "docbrowser"
-    :author "Elias Martenson <lokedhs@gmail.com>"
-    :license "BSD"
-    :description "Documentation browser for SBCL"
-    :depends-on (:hunchentoot
-                 :bordeaux-threads
-                 :yacc
-                 :parse-number)
-    :components ((:module src
-                          :serial t
-                          :components ((:file "package")
-                                       (:file "server")
-                                       (:file "docbrowser")))
-                 (:module template
-                          :serial t
-                          :components ((:file "template-package")
-                                       (:file "template")
-                                       (:file "parser")))))
+  :name "docbrowser"
+  :author "Elias Martenson <lokedhs@gmail.com>"
+  :license "BSD"
+  :description "Documentation browser for SBCL"
+  :depends-on (:hunchentoot
+               :bordeaux-threads
+               :yacc
+               :parse-number)
+  :components ((:module template
+                        :serial t
+                        :components ((:file "template-package")
+                                     (:file "template")
+                                     (:file "parser")))
+               (:module src
+                        :serial t
+                        :components ((:file "package")
+                                     (:file "server")
+                                     (:file "docbrowser")))))

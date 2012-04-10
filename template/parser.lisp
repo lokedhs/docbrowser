@@ -19,24 +19,27 @@
   (defmacro make-lexer-actions (&rest definitions)
     `(make-lexer-actions-list (list ,@(mapcar #'(lambda (definition)
                                                   `(list ,(car definition) ,(cadr definition)))
-                                              definitions))))
-
-  (defparameter *actions*
-    (make-lexer-actions ("[ \\n]+" (constantly :blank))
-                        ("if"     'if)
-                        ("end"    'end)
-                        ("while"  'while)
-                        ("repeat" 'repeat)
-                        ("for"    'for)
-                        ("with"   'with)
-                        (","      '|,|)
-                        ("="      '|=|)
-                        ("\\("    '|(|)
-                        ("\\)"    '|(|)
-                        ("([a-zA-Z_][a-zA-Z_0-9]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
-                        ("\"([^\"]*)\"" (lambda (exprs) (list 'string (aref exprs 0))))
-                        ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
+                                              definitions))))  
 ) ; EVAL-WHEN
+
+(defparameter *actions*
+  (make-lexer-actions ("[ \\n]+" (constantly :blank))
+                      ("if"     'if)
+                      ("end"    'end)
+                      ("while"  'while)
+                      ("repeat" 'repeat)
+                      ("for"    'for)
+                      ("with"   'with)
+                      (","      '|,|)
+                      ("="      '|=|)
+                      ("\\("    '|(|)
+                      ("\\)"    '|(|)
+                      ("@"      '|@|)
+                      ("#"      '|#|)
+                      ("\\."    '|.|)
+                      ("([a-zA-Z_][a-zA-Z_0-9-]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
+                      ("\"([^\"]*)\"" (lambda (exprs) (list 'string (aref exprs 0))))
+                      ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
 
 (defun make-stream-template-lexer (input-stream)
   (let ((lexer-actions *actions*)
@@ -136,14 +139,14 @@
 
 (yacc:define-parser *template-parser*
   (:start-symbol document)
-  (:terminals (template symbol string if end while repeat number for with |,| |=| |(| |)|))
+  (:terminals (template symbol string if end while repeat number for with |,| |=| |(| |)| |@| |#| |.|))
   (:precedence ((:right template)))
 
   (document
-   (document-nodes #'(lambda (doc) `(let ,@doc))))
+   (document-nodes #'(lambda (doc) `(progn ,@doc (values)))))
 
   (document-nodes
-   (document-node document-nodes #'(lambda (n rest) (append (list n) rest)))
+   (document-node document-nodes #'(lambda (n rest) (if n (append (list n) rest) rest)))
    nil)
 
   (template-list
@@ -151,7 +154,7 @@
    template)
 
   (document-node
-   (template-list #'(lambda (v) `(princ ,v stream)))
+   (template-list #'(lambda (v) (when (plusp (length v)) `(princ ,v stream))))
 
    (if expression document-nodes end
        #'(lambda (v1 expr document v4)
@@ -176,7 +179,14 @@
                         (gensym))))
               `(loop
                   for ,sym in ,data
-                  do (let ((*current-content* ,sym)) ,@document))))))
+                  do (let ((*current-content* ,sym)) ,@document)))))
+
+   (|#| data
+        #'(lambda (v1 data)
+            (declare (ignore v1))
+            `(princ ,data stream)))
+
+   )
 
   (optional-variable-assignment
    (with symbol #'(lambda (v1 symbol) (declare (ignore v1)) symbol))
@@ -184,10 +194,11 @@
 
   (data
    (symbol #'(lambda (symbol-name)
-               `(cdr (assoc ,(string->symbol symbol-name) *current-content*)))))
+               `(cdr (assoc ,(string->symbol symbol-name) *current-content*))))
+   (|.| #'(lambda (v1) (declare (ignore v1)) '*current-content*)))
 
   (expression
-   (symbol #'(lambda (v) `(gethash ,v *current-arguments-context*))))
+   (symbol #'(lambda (v) `(cdr (assoc  ,v *current-content*)))))
 
   (number-expr
    (number #'identity))
@@ -201,5 +212,6 @@
          (name (gensym)))
     (compile name `(lambda (data stream)
                      (declare (ignorable data stream))
-                     ,template-form))
+                     (let ((*current-content* data))
+                       ,template-form)))
     (symbol-function name)))

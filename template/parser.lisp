@@ -5,16 +5,36 @@
 (defvar *begin-code* "<%")
 (defvar *end-code* "%>")
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun make-lexer-actions-list (definitions)
+    (mapcar #'(lambda (definition)
+                (destructuring-bind (regex action)
+                    definition
+                  (list (cl-ppcre:create-scanner (concatenate 'string "^" regex))
+                        (etypecase action
+                          (symbol (constantly (list action nil)))
+                          (function action)))))
+            definitions))
+
+  (defmacro make-lexer-actions (&rest definitions)
+    `(make-lexer-actions-list (list ,@(mapcar #'(lambda (definition)
+                                                  `(list ,(car definition) ,(cadr definition)))
+                                              definitions))))
+
+  (defparameter *actions*
+    (make-lexer-actions ("[ \\n]+" (constantly :blank))
+                        ("if"     'if)
+                        ("end"    'end)
+                        ("while"  'while)
+                        ("repeat" 'repeat)
+                        (","      '|,|)
+                        ("([a-zA-Z_][a-zA-Z_0-9]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
+                        ("\"([^\"]*)\"" (lambda (exprs) (list 'string (aref exprs 0))))
+                        ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
+) ; EVAL-WHEN
+
 (defun make-stream-template-lexer (input-stream)
-  (let ((lexer-actions `(("^[ \\n]+" ,(constantly :blank))
-                         ("^if" ,(constantly (list 'if nil)))
-                         ("^end" ,(constantly (list 'end nil)))
-                         ("^while" ,(constantly (list 'while nil)))
-                         ("^repeat" ,(constantly (list 'repeat nil)))
-                         ("^," ,(constantly (list '|,| nil)))
-                         ("^([a-zA-Z_][a-zA-Z_0-9]*)" ,#'(lambda (exprs) (list 'symbol (aref exprs 0))))
-                         ("^\"([^\"]*)\"" ,#'(lambda (exprs) (list 'string (aref exprs 0))))
-                         ("^([0-9]+)" ,#'(lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
+  (let ((lexer-actions *actions*)
         (state :template)
         (current-line nil)
         (current-position 0)
@@ -58,21 +78,21 @@
                                  (setq longest-match-length (length result))
                                  (setq longest-match-exprs exprs)
                                  (setq longest-match-action action)))
-                          finally (if (plusp longest-match-length)
-                                      (progn
-                                        (incf current-position longest-match-length)
-                                        (return (funcall longest-match-action longest-match-exprs)))
-                                      (error "unmached string: ~s" (subseq current-line current-position))))))
+                          finally (cond ((plusp longest-match-length)
+                                         (incf current-position longest-match-length)
+                                         (return (funcall longest-match-action longest-match-exprs)))
+                                        (t
+                                         (error "unmached string: ~s" (subseq current-line current-position)))))))
 
                  (read-next-line ()
                    (unless input-finish
                      (setq current-line (read-line input-stream nil nil))
                      (setq current-position 0)
-                     (if current-line
-                         :blank
-                         (progn
-                           (setq input-finish t)
-                           nil))))
+                     (cond (current-line
+                            :blank)
+                           (t
+                            (setq input-finish t)
+                            nil))))
 
                  (parse-token ()
                    (cond ((null current-line)

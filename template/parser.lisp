@@ -132,7 +132,7 @@
          while a
          do (format t "~s ~s~%" a b)))))
 
-(defun string->symbol (symbol-name &optional (package "KEYWORD"))
+(defun string->symbol (symbol-name &optional (package *package*))
   (intern (string-upcase (string symbol-name)) package))
 
 (defvar *current-content* nil)
@@ -170,7 +170,7 @@
            #'(lambda (v1 number var-name document v5)
                (declare (ignore v1 v5))
                (let ((sym (if var-name
-                              (string->symbol var-name "CL-USER")
+                              (string->symbol var-name)
                               (gensym))))
                  `(loop for ,sym from 0 below ,number do (progn ,@document)))))
 
@@ -178,7 +178,7 @@
         #'(lambda (v1 data var-name document v5)
             (declare (ignore v1 v5))
             (let ((sym (if var-name
-                        (string->symbol var-name "CL-USER")
+                        (string->symbol var-name)
                         (gensym))))
               `(loop
                   for ,sym in ,data
@@ -197,9 +197,9 @@
 
   (data
    (symbol #'(lambda (symbol-name)
-               `(cdr (assoc ,(string->symbol symbol-name) *current-content*))))
+               `(cdr (assoc ,(string->symbol symbol-name "KEYWORD") *current-content*))))
    (|.| #'(lambda (v1) (declare (ignore v1)) '*current-content*))
-   (|,| symbol #'(lambda (v1 symbol) (declare (ignore v1)) (string->symbol symbol "CL-USER")))
+   (|,| symbol #'(lambda (v1 symbol) (declare (ignore v1)) (string->symbol symbol)))
    (string #'identity))
 
   (expression
@@ -210,10 +210,11 @@
   )
 
 (defun parse-stream-to-form (stream)
-  (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*))
+  (let ((*package* (make-package (gensym))))
+    (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
 
 (defun parse-template-by-stream (stream)
-  (let* ((template-form (parse-stream-to-form stream))
+  (let* ((template-form  (parse-stream-to-form stream))
          (name (gensym)))
     (compile name `(lambda (data stream)
                      (declare (ignorable data stream))

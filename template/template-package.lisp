@@ -1,5 +1,8 @@
 (defpackage :template
-  (:use :cl))
+  (:use :cl)
+  (:export
+   :parse-template
+   :parse-template-to-string))
 
 (in-package :template)
 

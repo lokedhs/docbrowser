@@ -9,7 +9,8 @@
                     :initform (error "name is a required parameter"))
    (modified-date   :type integer
                     :reader parsed-file-modified-date)
-   (last-time-check :type integer)
+   (last-time-check :type integer
+                    :accessor parsed-file-last-time-check)
    (template        :type function
                     :reader parsed-file-template
                     :initarg :template
@@ -31,14 +32,16 @@
   (bordeaux-threads:with-lock-held (*cached-templates-lock*)
     (let* ((pathname (pathname file))
            (cached (gethash pathname *cached-templates*)))
-      (funcall (parsed-file-template (if (or (null cached)
-                                             (> (file-write-date (parsed-file-pathspec cached))
-                                                (parsed-file-modified-date cached)))
-                                         (setf (gethash pathname *cached-templates*)
-                                               (make-instance 'parsed-file
-                                                              :name pathname
-                                                              :template (parse-template-file pathname)))
-                                         cached))
+      (funcall (parsed-file-template (cond ((or (null cached)
+                                                (> (file-write-date (parsed-file-pathspec cached))
+                                                   (parsed-file-modified-date cached)))
+                                            (setf (gethash pathname *cached-templates*)
+                                                  (make-instance 'parsed-file
+                                                                 :name pathname
+                                                                 :template (parse-template-file pathname))))
+                                           (t
+                                            (setf (parsed-file-last-time-check cached) (get-universal-time))
+                                            cached)))
                nil stream))))
 
 (defun parse-template-to-string (file)

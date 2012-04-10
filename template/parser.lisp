@@ -27,7 +27,12 @@
                         ("end"    'end)
                         ("while"  'while)
                         ("repeat" 'repeat)
+                        ("for"    'for)
+                        ("with"   'with)
                         (","      '|,|)
+                        ("="      '|=|)
+                        ("\\("    '|(|)
+                        ("\\)"    '|(|)
                         ("([a-zA-Z_][a-zA-Z_0-9]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
                         ("\"([^\"]*)\"" (lambda (exprs) (list 'string (aref exprs 0))))
                         ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
@@ -124,13 +129,18 @@
          while a
          do (format t "~s ~s~%" a b)))))
 
+(defun string->symbol (symbol-name &optional (package "KEYWORD"))
+  (intern (string-upcase (string symbol-name)) package))
+
+(defvar *current-content* nil)
+
 (yacc:define-parser *template-parser*
   (:start-symbol document)
-  (:terminals (template symbol string if end while repeat |,| number))
+  (:terminals (template symbol string if end while repeat number for with |,| |=| |(| |)|))
   (:precedence ((:right template)))
 
   (document
-   (document-nodes #'(lambda (doc) `(progn ,@doc))))
+   (document-nodes #'(lambda (doc) `(let ,@doc))))
 
   (document-nodes
    (document-node document-nodes #'(lambda (n rest) (append (list n) rest)))
@@ -143,17 +153,38 @@
   (document-node
    (template-list #'(lambda (v) `(princ ,v stream)))
 
-   (if expression document-nodes end #'(lambda (v1 expr document v4)
-                                         (declare (ignore v1 v4))
-                                         `(if ,expr (progn ,@document))))
+   (if expression document-nodes end
+       #'(lambda (v1 expr document v4)
+           (declare (ignore v1 v4))
+           `(if ,expr (progn ,@document))))
 
-   (while expression document-nodes end #'(lambda (v1 expr document v4)
-                                            (declare (ignore v1 v4))
-                                            `(loop while ,expr do (progn ,@document))))
+   (while expression document-nodes end
+          #'(lambda (v1 expr document v4)
+              (declare (ignore v1 v4))
+              `(loop while ,expr do (progn ,@document))))
 
-   (repeat number-expr document-nodes end #'(lambda (v1 number document v4)
-                                              (declare (ignore v1 v4))
-                                              `(loop repeat ,number do (progn ,@document)))))
+   (repeat number-expr document-nodes end
+           #'(lambda (v1 number document v4)
+               (declare (ignore v1 v4))
+               `(loop repeat ,number do (progn ,@document))))
+
+   (for data optional-variable-assignment document-nodes end
+        #'(lambda (v1 data var-name document v5)
+            (declare (ignore v1 v5))
+            (let ((sym (if var-name
+                        (string->symbol var-name "CL-USER")
+                        (gensym))))
+              `(loop
+                  for ,sym in ,data
+                  do (let ((*current-content* ,sym)) ,@document))))))
+
+  (optional-variable-assignment
+   (with symbol #'(lambda (v1 symbol) (declare (ignore v1)) symbol))
+   nil)
+
+  (data
+   (symbol #'(lambda (symbol-name)
+               `(cdr (assoc ,(string->symbol symbol-name) *current-content*)))))
 
   (expression
    (symbol #'(lambda (v) `(gethash ,v *current-arguments-context*))))

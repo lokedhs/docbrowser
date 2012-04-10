@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Template test</title>
+  </head>
+  <body>
+    <div>Template test</div>
+
+    <!-- Command: repeat {number} [with {variable}]
+         Repeats the block the given number of times. If "with {variable}" is given,
+         then the index (starting at zero) will be assigned to that variable
+         each repetition -->
+    <% repeat 5 with value %>
+
+    <div>
+      <!-- Command: # {value}
+           Outputs the given value
+
+           Operator: , {variable}
+           Returns the content of the given variable
+
+           In other words, the below example outputs the content of the variable "value" -->
+      Row number: <% #,value %>
+    </div>
+
+    <!-- Command: end
+         Signals the end of a block -->
+    <% end %>
+
+    <div>End of template test</div>
+  </body>
+</html>

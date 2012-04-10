@@ -166,10 +166,13 @@
               (declare (ignore v1 v4))
               `(loop while ,expr do (progn ,@document))))
 
-   (repeat number-expr document-nodes end
-           #'(lambda (v1 number document v4)
-               (declare (ignore v1 v4))
-               `(loop repeat ,number do (progn ,@document))))
+   (repeat number-expr optional-variable-assignment document-nodes end
+           #'(lambda (v1 number var-name document v5)
+               (declare (ignore v1 v5))
+               (let ((sym (if var-name
+                              (string->symbol var-name "CL-USER")
+                              (gensym))))
+                 `(loop for ,sym from 0 below ,number do (progn ,@document)))))
 
    (for data optional-variable-assignment document-nodes end
         #'(lambda (v1 data var-name document v5)
@@ -195,7 +198,9 @@
   (data
    (symbol #'(lambda (symbol-name)
                `(cdr (assoc ,(string->symbol symbol-name) *current-content*))))
-   (|.| #'(lambda (v1) (declare (ignore v1)) '*current-content*)))
+   (|.| #'(lambda (v1) (declare (ignore v1)) '*current-content*))
+   (|,| symbol #'(lambda (v1 symbol) (declare (ignore v1)) (string->symbol symbol "CL-USER")))
+   (string #'identity))
 
   (expression
    (symbol #'(lambda (v) `(cdr (assoc  ,v *current-content*)))))

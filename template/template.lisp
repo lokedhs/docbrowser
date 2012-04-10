@@ -28,7 +28,7 @@
   (with-open-file (s pathname)
     (parse-template-by-stream s)))
 
-(defun parse-template (file stream)
+(defun parse-template (file data stream)
   (bordeaux-threads:with-lock-held (*cached-templates-lock*)
     (let* ((pathname (pathname file))
            (cached (gethash pathname *cached-templates*)))
@@ -42,8 +42,8 @@
                                            (t
                                             (setf (parsed-file-last-time-check cached) (get-universal-time))
                                             cached)))
-               nil stream))))
+               data stream))))
 
-(defun parse-template-to-string (file)
+(defun parse-template-to-string (file data)
   (with-output-to-string (s)
-    (parse-template file s)))
+    (parse-template file data s)))

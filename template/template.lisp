@@ -26,7 +26,7 @@
 
 (defun parse-template-file (pathname)
   (with-open-file (s pathname)
-    (parse-template-by-stream s)))
+    (parse-template-by-stream s :binary t)))
 
 (defun parse-template (file data stream)
   (bordeaux-threads:with-lock-held (*cached-templates-lock*)

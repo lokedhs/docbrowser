@@ -8,6 +8,9 @@
 (defvar *current-line-num* nil
   "Dynamic variable used to track the current line number during parsing")
 
+(defvar *output-binary* nil)
+(defvar *output-encoding* nil)
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-lexer-actions-list (definitions)
     (mapcar #'(lambda (definition)
@@ -166,10 +169,10 @@
        ,@initials
        ,@(mapcar #'process-definition definitions))))
 
-(short-define-parser *template-parser ((:start-symbol document)
-                                       (:terminals (template symbol string if end while repeat number for with
-                                                             |,| |=| |(| |)| |@| |#| |.|))
-                                       (:precedence ((:right template))))
+(short-define-parser *template-parser* ((:start-symbol document)
+                                        (:terminals (template symbol string if end while repeat number for with
+                                                              |,| |=| |(| |)| |@| |#| |.|))
+                                        (:precedence ((:right template))))
                      
   (document
    ((document-nodes)
@@ -191,7 +194,9 @@
   (document-node
    ((template-list)
     (when (plusp (length template-list))
-      `(princ ,template-list stream)))
+      (if *output-binary*
+          `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) stream)
+          `(princ ,template-list stream))))
 
    ((if expression document-nodes end)
     `(if ,expression (progn ,@document-nodes)))
@@ -214,7 +219,11 @@
           do (let ((*current-content* ,sym)) ,@document-nodes))))
 
    ((|#| data)
-    `(princ ,data stream))
+    (if *output-binary*
+        `(write-sequence (babel:string-to-octets (escape-string-minimal-plus-quotes (princ-to-string ,data))
+                                                 :encoding ,*output-encoding*)
+                         stream)
+        `(princ (escape-string-minimal-plus-quotes ,data) stream)))
 
    )
 
@@ -236,13 +245,15 @@
 
 )
 
-(defun parse-stream-to-form (stream)
+(defun parse-stream-to-form (stream binary encoding)
   (let ((*package* (find-package :template-parse))
-        (*current-line-num* 0))
+        (*current-line-num* 0)
+        (*output-binary* binary)
+        (*output-encoding* encoding))
     (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
 
-(defun parse-template-by-stream (stream)
-  (let* ((template-form  (parse-stream-to-form stream))
+(defun parse-template-by-stream (stream &key binary (encoding :utf-8))
+  (let* ((template-form  (parse-stream-to-form stream binary encoding))
          (name (gensym)))
     (compile name `(lambda (data stream)
                      (declare (ignorable data stream))

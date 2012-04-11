@@ -16,6 +16,7 @@
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")
+                                     (:file "util")
                                      (:file "template")
                                      (:file "parser")))
                (:module src

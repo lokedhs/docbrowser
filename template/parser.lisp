@@ -5,6 +5,9 @@
 (defvar *begin-code* "<%")
 (defvar *end-code* "%>")
 
+(defvar *current-line-num* nil
+  "Dynamic variable used to track the current line number during parsing")
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-lexer-actions-list (definitions)
     (mapcar #'(lambda (definition)
@@ -90,11 +93,18 @@
                                          (incf current-position longest-match-length)
                                          (return (funcall longest-match-action longest-match-exprs)))
                                         (t
-                                         (error "unmached string: ~s" (subseq current-line current-position)))))))
+                                         (error "Syntax error at line ~a:~a:~%~a~%~a^"
+                                                *current-line-num* current-position
+                                                current-line
+                                                (with-output-to-string (s)
+                                                  (loop
+                                                     repeat current-position
+                                                     do (princ " " s)))))))))
 
                  (read-next-line ()
                    (unless input-finish
                      (setq current-line (read-line input-stream nil nil))
+                     (incf *current-line-num*)
                      (setq current-position 0)
                      (cond (current-line
                             :blank)
@@ -139,80 +149,96 @@
 
 (defvar *current-content* nil)
 
-(yacc:define-parser *template-parser*
-  (:start-symbol document)
-  (:terminals (template symbol string if end while repeat number for with |,| |=| |(| |)| |@| |#| |.|))
-  (:precedence ((:right template)))
+(defmacro short-define-parser (name initials &body definitions)
+  (labels ((process-row (row)
+             (let* ((arguments (car row))
+                    (param-list (mapcar #'(lambda (arg) (if (listp arg) (cadr arg) arg)) arguments)))
+               (append (mapcar #'(lambda (arg) (if (listp arg) (car arg) arg)) arguments)
+                       (when (cadr row) (list `#'(lambda ,param-list
+                                                   (declare (ignorable ,@param-list))
+                                                   ,@(cdr row)))))))
 
+           (process-definition (definition)
+             (append (list (car definition))
+                     (mapcar #'process-row (cdr definition)))))
+
+    `(yacc:define-parser ,name
+       ,@initials
+       ,@(mapcar #'process-definition definitions))))
+
+(short-define-parser *template-parser ((:start-symbol document)
+                                       (:terminals (template symbol string if end while repeat number for with
+                                                             |,| |=| |(| |)| |@| |#| |.|))
+                                       (:precedence ((:right template))))
+                     
   (document
-   (document-nodes #'(lambda (doc) `(progn ,@doc (values)))))
+   ((document-nodes)
+    `(progn ,@document-nodes (values))))
 
   (document-nodes
-   (document-node document-nodes #'(lambda (n rest) (if n (append (list n) rest) rest)))
-   nil)
+   ((document-node document-nodes)
+    (if document-node
+        (append (list document-node) document-nodes)
+        document-nodes))
+   (nil))
 
   (template-list
-   (template template-list #'(lambda (v1 v2) (concatenate 'string v1 v2)))
-   template)
+   ((template template-list)
+    (concatenate 'string template template-list))
+   ((template)
+    template))
 
   (document-node
-   (template-list #'(lambda (v) (when (plusp (length v)) `(princ ,v stream))))
+   ((template-list)
+    (when (plusp (length template-list))
+      `(princ ,template-list stream)))
 
-   (if expression document-nodes end
-       #'(lambda (v1 expr document v4)
-           (declare (ignore v1 v4))
-           `(if ,expr (progn ,@document))))
+   ((if expression document-nodes end)
+    `(if ,expression (progn ,@document-nodes)))
 
-   (while expression document-nodes end
-          #'(lambda (v1 expr document v4)
-              (declare (ignore v1 v4))
-              `(loop while ,expr do (progn ,@document))))
+   ((while expression document-nodes end)
+    `(loop while ,expression do (progn ,@document-nodes)))
 
-   (repeat number-expr optional-variable-assignment document-nodes end
-           #'(lambda (v1 number var-name document v5)
-               (declare (ignore v1 v5))
-               (let ((sym (if var-name
-                              (string->symbol var-name)
-                              (gensym))))
-                 `(loop for ,sym from 0 below ,number do (progn ,@document)))))
+   ((repeat number-expr (optional-variable-assignment var-name) document-nodes end)
+    (let ((sym (if var-name
+                   (string->symbol var-name)
+                   (gensym))))
+      `(loop for ,sym from 0 below ,number-expr do (progn ,@document-nodes))))
 
-   (for data optional-variable-assignment document-nodes end
-        #'(lambda (v1 data var-name document v5)
-            (declare (ignore v1 v5))
-            (let ((sym (if var-name
-                        (string->symbol var-name)
-                        (gensym))))
-              `(loop
-                  for ,sym in ,data
-                  do (let ((*current-content* ,sym)) ,@document)))))
+   ((for data (optional-variable-assignment var-name) document-nodes end)
+    (let ((sym (if var-name
+                   (string->symbol var-name)
+                   (gensym))))
+      `(loop
+          for ,sym in ,data
+          do (let ((*current-content* ,sym)) ,@document-nodes))))
 
-   (|#| data
-        #'(lambda (v1 data)
-            (declare (ignore v1))
-            `(princ ,data stream)))
+   ((|#| data)
+    `(princ ,data stream))
 
    )
 
   (optional-variable-assignment
-   (with symbol #'(lambda (v1 symbol) (declare (ignore v1)) symbol))
+   ((with symbol) symbol)
    nil)
 
   (data
-   (symbol #'(lambda (symbol-name)
-               `(cdr (assoc ,(string->symbol symbol-name "KEYWORD") *current-content*))))
-   (|.| #'(lambda (v1) (declare (ignore v1)) '*current-content*))
-   (|,| symbol #'(lambda (v1 symbol) (declare (ignore v1)) (string->symbol symbol)))
-   (string #'identity))
+   ((symbol)     `(cdr (assoc ,(string->symbol symbol "KEYWORD") *current-content*)))
+   ((|.|)        '*current-content*)
+   ((|,| symbol) (string->symbol symbol))
+   ((string)     string))
 
   (expression
-   (symbol #'(lambda (v) `(cdr (assoc  ,v *current-content*)))))
+   ((symbol) `(cdr (assoc  ,symbol *current-content*))))
 
   (number-expr
-   (number #'identity))
-  )
+   ((number) number))
+
+)
 
 (defun parse-stream-to-form (stream)
-  (let ((*package* (find-package :template-parse)))
+  (let ((*package* (find-package :template-parse))
+        (*current-line-num* 0))
     (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
 
 (defun parse-template-by-stream (stream)

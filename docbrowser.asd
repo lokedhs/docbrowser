@@ -11,7 +11,8 @@
   :depends-on (:hunchentoot
                :bordeaux-threads
                :yacc
-               :parse-number)
+               :parse-number
+               :babel)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

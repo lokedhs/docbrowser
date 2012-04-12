@@ -2,7 +2,8 @@
   (:use :cl)
   (:export
    :parse-template
-   :parse-template-to-string))
+   :exec-template-file-to-string 
+   :exec-template-file))
 
 (in-package :template)
 

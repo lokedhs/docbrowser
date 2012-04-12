@@ -44,8 +44,22 @@
                       ("#"      '|#|)
                       ("\\."    '|.|)
                       ("([a-zA-Z_][a-zA-Z_0-9-]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
-                      ("\"([^\"]*)\"" (lambda (exprs) (list 'string (aref exprs 0))))
+                      ("\"((?:(?:\\\\\")|[^\"])*)\"" (lambda (exprs)
+                                                       (list 'string (escape-string-slashes (aref exprs 0)))))
                       ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
+
+(defun escape-string-slashes (string)
+  (with-output-to-string (out)
+    (with-input-from-string (in string)
+      (loop
+         for ch = (read-char in nil nil)
+         while ch
+         do (cond ((char= ch #\\)
+                   (case (read-char in)
+                     ((#\") (write-char #\" out))
+                     (t     (error "Illegal escape sequence in string: \"~a\"" string))))
+                  (t
+                   (write-char ch out)))))))
 
 (defun make-stream-template-lexer (input-stream)
   (let ((lexer-actions *actions*)
@@ -223,7 +237,7 @@
         `(write-sequence (babel:string-to-octets (escape-string-minimal-plus-quotes (princ-to-string ,data))
                                                  :encoding ,*output-encoding*)
                          stream)
-        `(princ (escape-string-minimal-plus-quotes ,data) stream)))
+        `(princ (escape-string-minimal-plus-quotes (princ-to-string ,data)) stream)))
 
    )
 
@@ -252,7 +266,17 @@
         (*output-encoding* encoding))
     (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
 
-(defun parse-template-by-stream (stream &key binary (encoding :utf-8))
+(defun parse-template (stream &key binary (encoding :utf-8))
+  "Parses and compiles the template defition given as STREAM. If BINARY
+is NIL, the generated template will output its data as strings \(using
+PRINC), otherwise the output will be converted to binary using the
+encoding specified by ENCODING. The binary output is the preferred
+method as that will allow constant strings in the template to be
+encoded during parsing instead of at runtime.
+
+The return value is a function that takes two arguments, DATA and OUTPUT.
+DATA is the data that will be used by the template, and OUTPUT is the
+output stream to which the result should be written."
   (let* ((template-form  (parse-stream-to-form stream binary encoding))
          (name (gensym)))
     (compile name `(lambda (data stream)

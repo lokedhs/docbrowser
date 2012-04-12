@@ -11,6 +11,44 @@
 (defvar *output-binary* nil)
 (defvar *output-encoding* nil)
 
+(define-condition template-error (error)
+  ((line          :type integer
+                  :initarg :line
+                  :initform (error "~s required when creating ~s" :line 'template-error)
+                  :reader template-error-line
+                  :documentation "The line number where the error occurred")
+   (column        :type (or nil integer)
+                  :initarg :column
+                  :initform nil
+                  :reader template-error-column
+                  :documentation "The column index of the line where the error
+occurred, if available. Otherwise NIL.")
+   (message       :type string
+                  :initarg :message
+                  :initform (error "~s required when creating ~s" :message 'template-error)
+                  :reader template-error-message
+                  :documentation "The error message")
+   (content       :type (or nil string)
+                  :initarg :content
+                  :initform nil
+                  :reader template-error-content
+                  :documentation "The actual template content where the error
+occurred. Either the entire line, or part of it.")
+   (content-index :type (or nil integer)
+                  :initarg :content-index
+                  :initform nil
+                  :reader template-error-content-index
+                  :documentation "The position in content closest to the actual error"))
+  (:documentation "Error that is raised if there is an error parsing a template")
+  (:report (lambda (condition stream)
+             (with-slots (line column message content content-index) condition
+               (format stream "Line ~a" line)
+               (when column
+                 (format stream ", column ~a" column))
+               (format stream ": ~a" message)
+               (when content
+                 (format stream "~%~a~%~,,v@a" content content-index "^"))))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-lexer-actions-list (definitions)
     (mapcar #'(lambda (definition)
@@ -48,16 +86,26 @@
                                                        (list 'string (escape-string-slashes (aref exprs 0)))))
                       ("([0-9]+)" (lambda (exprs) (list 'number (parse-number:parse-number (aref exprs 0)))))))
 
+(defun signal-template-error (message &optional column content content-index)
+  (error 'template-error
+         :line *current-line-num*
+         :column column
+         :message message
+         :content content
+         :content-index content-index))
+
 (defun escape-string-slashes (string)
   (with-output-to-string (out)
     (with-input-from-string (in string)
       (loop
          for ch = (read-char in nil nil)
+         for i from 0
          while ch
          do (cond ((char= ch #\\)
-                   (case (read-char in)
+                   (case (prog1 (read-char in) (incf i))
                      ((#\") (write-char #\" out))
-                     (t     (error "Illegal escape sequence in string: \"~a\"" string))))
+                     (t     (signal-template-error "Illegal escape sequence"
+                                                   nil (format nil "\"~a\"" string) (1+ i)))))
                   (t
                    (write-char ch out)))))))
 
@@ -83,40 +131,38 @@
                            (list 'template result)))))
 
                  (read-code ()
-                   (if (and (>= (length current-line)
-                                (+ current-position (length *end-code*)))
-                            (string= current-line *end-code*
-                                     :start1 current-position
-                                     :end1 (+ current-position (length *end-code*))))
-                       ;; End code was found
-                       (progn
-                         (incf current-position (length *end-code*))
-                         (setq state :template)
-                         :blank)
-                       ;; No end code found, check the actions
-                       (loop
-                          with longest-match-length = 0
-                          with longest-match-exprs = nil
-                          with longest-match-action = nil
-                          for (regex action) in lexer-actions                      
-                          do (multiple-value-bind (result exprs)
-                                 (cl-ppcre:scan-to-strings regex current-line :start current-position)
-                               (when (and result
-                                          (> (length result) longest-match-length))
-                                 (setq longest-match-length (length result))
-                                 (setq longest-match-exprs exprs)
-                                 (setq longest-match-action action)))
-                          finally (cond ((plusp longest-match-length)
-                                         (incf current-position longest-match-length)
-                                         (return (funcall longest-match-action longest-match-exprs)))
-                                        (t
-                                         (error "Syntax error at line ~a:~a:~%~a~%~a^"
-                                                *current-line-num* current-position
-                                                current-line
-                                                (with-output-to-string (s)
-                                                  (loop
-                                                     repeat current-position
-                                                     do (princ " " s)))))))))
+                   (cond ((and (>= (length current-line)
+                                    (+ current-position (length *end-code*)))
+                                (string= current-line *end-code*
+                                         :start1 current-position
+                                         :end1 (+ current-position (length *end-code*))))
+                          ;; End code was found
+                          (progn
+                            (incf current-position (length *end-code*))
+                            (setq state :template)
+                            :blank))
+                         (t
+                          ;; No end code found, check the actions
+                          (loop
+                             with longest-match-length = 0
+                             with longest-match-exprs = nil
+                             with longest-match-action = nil
+                             for (regex action) in lexer-actions                      
+                             do (multiple-value-bind (result exprs)
+                                    (cl-ppcre:scan-to-strings regex current-line :start current-position)
+                                  (when (and result
+                                             (> (length result) longest-match-length))
+                                    (setq longest-match-length (length result))
+                                    (setq longest-match-exprs exprs)
+                                    (setq longest-match-action action)))
+                             finally (cond ((plusp longest-match-length)
+                                            (incf current-position longest-match-length)
+                                            (return (funcall longest-match-action longest-match-exprs)))
+                                           (t
+                                            (signal-template-error "Syntax error"
+                                                                   current-position
+                                                                   current-line
+                                                                   current-position)))))))
 
                  (read-next-line ()
                    (unless input-finish

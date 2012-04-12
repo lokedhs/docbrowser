@@ -40,9 +40,7 @@
 
 (defun find-method-info (method)
   (let ((symbol (cadar method)))
-    (list (cons :name (format nil "~a:~a"
-                              (package-name (symbol-package symbol))
-                              (symbol-name symbol))))))
+    (list (cons :name (princ-to-string symbol)))))
 
 (defun safe-class-for-symbol (symbol)
   (handler-case

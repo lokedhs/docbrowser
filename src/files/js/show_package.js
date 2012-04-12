@@ -1,5 +1,5 @@
 function init() {
-    console.log( "foo" );
+    $("#tabs").tabs();
 }
 
 $(document).ready( init );

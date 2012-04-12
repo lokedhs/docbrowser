@@ -2,7 +2,7 @@
 <html>
   <head>
     <title>Package <% #name %></title>
-    <link rel="stylesheet" href="/css/ui-lightness/jquery-ui-1.8.18.custom.css">
+    <link rel="stylesheet" type="text/css" href="/css/ui-lightness/jquery-ui-1.8.18.custom.css">
     <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8.18.custom.min.js"></script>
     <script type="text/javascript" src="/js/show_package.js"></script>
@@ -12,67 +12,88 @@
     </style>
   </head>
   <body>
-    <h1>Package <span class="sourceStyle"><% #name %></span></h1>
+    
+    <div class="package-list">
+      <!--
+          <h1>Package <span class="sourceStyle"><% #name %></span></h1>
+          -->
 
-    <h2>Classes</h2>
+      <div id="tabs">
+        <ul>
+          <li><a href="#tabs-functions">Functions</a></li>
+          <li><a href="#tabs-classes">Classes</a></li>
+          <li><a href="#tabs-variables">Variables</a></li>
+        </ul>
 
-    <% for classes %>
-    <h3>
-      <span class="sourceStyle"><b><% #name %></b></span>
-    </h3>
+        <div id="tabs-functions">
+          <% for functions %>
+          <h3>
+            <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
+          </h3>
+          <div>
+            <% if documentation %>
+            <blockquote>
+              <pre><% #documentation %></pre>
+            </blockquote>
+            <% end %>
+          </div>
+          <% end %>
+        </div>
 
-    <% if documentation %>
-    <blockquote>
-      <pre><% #documentation %></pre>
-    </blockquote>
-    <% end %>
+        <div id="tabs-classes">
+          <% for classes %>
+          <h3>
+            <span class="sourceStyle"><b><% #name %></b></span>
+          </h3>
 
-    <% if methods %>
-    <h4>Specialised by</h4>
-    <% for methods %>
-    <div>
-      <span class="sourceStyle"><% #name %></span>
-    </div>
-    <% end %>
-    <% end %>
+          <% if documentation %>
+          <blockquote>
+            <pre><% #documentation %></pre>
+          </blockquote>
+          <% end %>
 
-    <% end %>
+          <% if methods %>
+          <h4>Specialised by</h4>
+          <% for methods %>
+          <div>
+            <span class="sourceStyle"><% #name %></span>
+          </div>
+          <% end %>
+          <% end %>
 
-    <h2>Functions</h2>
+          <hr>
 
-    <% for functions %>
-    <h3>
-      <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
-    </h3>
-    <div>
-      <% if documentation %>
-      <blockquote>
-        <pre><% #documentation %></pre>
-      </blockquote>
-      <% end %>
-    </div>
-    <% end %>
+          <% end %>
+        </div>
 
-    <h2>Variables</h2>
-
-    <% for variables %>
-    <h3>
-      <span class="sourceStyle"><b><% #name %></b></span>
-    </h3>
-    <div>
-      <div>
-        <% if boundp %>
-        Value: <span class="sourceStyle"><% #value %></span>
-        <% else %>
-        Not bound
-        <% end %>
+        <div id="tabs-variables">
+          <% for variables %>
+          <h3>
+            <span class="sourceStyle"><b><% #name %></b></span>
+          </h3>
+          <div>
+            <div>
+              <% if boundp %>
+              Value: <span class="sourceStyle"><% #value %></span>
+              <% else %>
+              Not bound
+              <% end %>
+            </div>
+            <% if documentation %>
+            <blockquote>
+              <pre><% #documentation %></pre>
+            </blockquote>
+            <% end %>
+            <% end %>
+          </div>
+        </div>
       </div>
-      <% if documentation %>
-      <blockquote>
-        <pre><% #documentation %></pre>
-      </blockquote>
-      <% end %>
-    <% end %>
+    </div>
 
+    <div class="package-list-description" style="display: none;">
+      <p>
+        This is the package list
+      </p>
+    </div>
   </body>
 </html>

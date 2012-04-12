@@ -10,6 +10,30 @@
   <body>
     <h1>Package <span class="sourceStyle"><% #name %></span></h1>
 
+    <h2>Classes</h2>
+
+    <% for classes %>
+    <h3>
+      <span class="sourceStyle"><b><% #name %></b></span>
+    </h3>
+
+    <% if documentation %>
+    <blockquote>
+      <pre><% #documentation %></pre>
+    </blockquote>
+    <% end %>
+
+    <% if methods %>
+    <h4>Specialised by</h4>
+    <% for methods %>
+    <div>
+      <span class="sourceStyle"><% #name %></span>
+    </div>
+    <% end %>
+    <% end %>
+
+    <% end %>
+
     <h2>Functions</h2>
 
     <% for functions %>

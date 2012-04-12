@@ -12,7 +12,8 @@
                :bordeaux-threads
                :yacc
                :parse-number
-               :babel)
+               :babel
+               :closer-mop)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")
@@ -21,6 +22,7 @@
                                      (:file "parser")))
                (:module src
                         :serial t
+                        :depends-on ("template")
                         :components ((:file "package")
                                      (:file "server")
                                      (:file "docbrowser")))))

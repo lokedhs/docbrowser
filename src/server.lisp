@@ -56,4 +56,5 @@ written to."
   (setq hunchentoot:*log-lisp-warnings-p* t)
   (setq hunchentoot:*log-lisp-backtraces-p* t)
   (setf (hunchentoot:acceptor-access-log-destination *global-acceptor*) (make-broadcast-stream))
+  (format t "Docserver started on port ~a" port)
   (values))

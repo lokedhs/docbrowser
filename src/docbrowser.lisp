@@ -52,7 +52,16 @@
         (v (if (symbolp class) (find-class class) class)))
     #+sbcl (sort (loop
                     for v in (sb-introspect:who-specializes-directly v)
-                    unless (member (cadar v) ignored)
+                    for symbol = (cadar v)
+                    when (and (not (member symbol ignored))
+                              (eq (nth-value 1 (find-symbol (symbol-name (cond ((symbolp symbol)
+                                                                                symbol)
+                                                                               ((eq (car symbol) 'setf)
+                                                                                (cadr symbol))
+                                                                               (t
+                                                                                (error "Unknown symbol type: ~s" symbol))))
+                                                            (symbol-package (class-name class))))
+                                  :external))
                     collect (find-method-info v))
                  #'string< :key #'(lambda (v) (cdr (assoc :name v))))))
 

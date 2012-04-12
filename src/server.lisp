@@ -6,8 +6,18 @@
   (format nil "~asrc/" (namestring (asdf:component-pathname (asdf:find-system :docbrowser)))))
 
 (defclass docbrowser-acceptor (hunchentoot:acceptor)
-  ()
+  ((files-dispatcher :reader docbrowser-acceptor-files-dispatcher
+                     :documentation "List of fallback dispatchers"))
   (:documentation "Acceptor for the documentation browser"))
+
+(defmethod initialize-instance :after ((acceptor docbrowser-acceptor) &key &allow-other-keys)
+  (setf (slot-value acceptor 'files-dispatcher)
+        (mapcar #'(lambda (path)
+                    (hunchentoot:create-folder-dispatcher-and-handler (format nil "/~a/" path)
+                                                                      (pathname (concatenate 'string
+                                                                                             *files-base-dir*
+                                                                                             "files/" path "/"))))
+                '("css" "js"))))
 
 (defvar *url-handlers* (make-hash-table :test 'equal)
   "A hash table keyed on the base URL that maps to the underlying handler function")
@@ -16,7 +26,14 @@
   (let ((handler (gethash (hunchentoot:script-name request) *url-handlers*)))
     (if handler
         (funcall handler)
-        (call-next-method))))
+        (loop
+           for dispatcher in (docbrowser-acceptor-files-dispatcher acceptor)
+           for dis = (funcall dispatcher request)
+           when dis
+           do (progn
+                (funcall dis)
+                (return nil))
+           finally (call-next-method)))))
 
 (defun %make-define-handler-fn-form (docstring name body)
   `(defun ,name ()

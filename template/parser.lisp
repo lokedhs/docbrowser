@@ -137,10 +137,9 @@ occurred. Either the entire line, or part of it.")
                                          :start1 current-position
                                          :end1 (+ current-position (length *end-code*))))
                           ;; End code was found
-                          (progn
-                            (incf current-position (length *end-code*))
-                            (setq state :template)
-                            :blank))
+                          (incf current-position (length *end-code*))
+                          (setq state :template)
+                          :blank)
                          (t
                           ;; No end code found, check the actions
                           (loop

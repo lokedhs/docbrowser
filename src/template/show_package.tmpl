@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Package <% #name %></title>
+    <style>
+      .sourceStyle { font-family: Monospace }
+      h3 { font-weight: normal }
+    </style>
+  </head>
+  <body>
+    <h1>Package <span class="sourceStyle"><% #name %></span></h1>
+
+    <h2>Functions</h2>
+
+    <% for functions %>
+    <h3>
+      <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
+    </h3>
+    <div>
+      <% if documentation %>
+      <blockquote>
+        <pre><% #documentation %></pre>
+      </blockquote>
+      <% end %>
+    </div>
+    <% end %>
+
+    <h2>Variables</h2>
+
+    <% for variables %>
+    <h3>
+      <span class="sourceStyle"><b><% #name %></b></span>
+    </h3>
+    <div>
+      <div>
+        <% if boundp %>
+        Value: <span class="sourceStyle"><% #value %></span>
+        <% else %>
+        Not bound
+        <% end %>
+      </div>
+      <% if documentation %>
+      <blockquote>
+        <pre><% #documentation %></pre>
+      </blockquote>
+      <% end %>
+    <% end %>
+
+  </body>
+</html>

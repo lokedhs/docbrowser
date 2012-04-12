@@ -69,6 +69,7 @@ occurred. Either the entire line, or part of it.")
 (defparameter *actions*
   (make-lexer-actions ("[ \\n]+" (constantly :blank))
                       ("if"     'if)
+                      ("else"   'else)
                       ("end"    'end)
                       ("while"  'while)
                       ("repeat" 'repeat)
@@ -229,7 +230,7 @@ occurred. Either the entire line, or part of it.")
        ,@(mapcar #'process-definition definitions))))
 
 (short-define-parser *template-parser* ((:start-symbol document)
-                                        (:terminals (template symbol string if end while repeat number for with
+                                        (:terminals (template symbol string if end else while repeat number for with
                                                               |,| |=| |(| |)| |@| |#| |.|))
                                         (:precedence ((:right template))))
                      
@@ -257,8 +258,8 @@ occurred. Either the entire line, or part of it.")
           `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) stream)
           `(princ ,template-list stream))))
 
-   ((if expression document-nodes end)
-    `(if ,expression (progn ,@document-nodes)))
+   ((if expression document-nodes else-statement end)
+    `(if ,expression (progn ,@document-nodes) ,else-statement))
 
    ((while expression document-nodes end)
     `(loop while ,expression do (progn ,@document-nodes)))
@@ -286,6 +287,11 @@ occurred. Either the entire line, or part of it.")
 
    )
 
+  (else-statement
+   ((else document-nodes)
+    `(progn ,@document-nodes))
+   nil)
+
   (optional-variable-assignment
    ((with symbol) symbol)
    nil)
@@ -297,7 +303,7 @@ occurred. Either the entire line, or part of it.")
    ((string)     string))
 
   (expression
-   ((symbol) `(cdr (assoc  ,symbol *current-content*))))
+   ((data) data #+nil`(cdr (assoc ,data *current-content*))))
 
   (number-expr
    ((number) number))

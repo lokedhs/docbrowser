@@ -29,6 +29,9 @@
     (parse-template s :binary t)))
 
 (defun exec-template-file (file data stream)
+  "Load and compile FILE and put it into the template cache if it was not
+already in the cache. Then run the template using DATA and write the
+output to STREAM."
   (bordeaux-threads:with-lock-held (*cached-templates-lock*)
     (let* ((pathname (pathname file))
            (cached (gethash pathname *cached-templates*)))

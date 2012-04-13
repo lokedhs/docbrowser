@@ -57,10 +57,18 @@
              collect (find-method-info v))
           #'string< :key #'assoc-name)))
 
+(defun load-slots (class)
+  (closer-mop:ensure-finalized class)
+  (flet ((load-slot (slot)
+           (list (cons :name (closer-mop:slot-definition-name slot))
+                 (cons :documentation (documentation slot t)))))
+    (mapcar #'load-slot (closer-mop:class-slots class))))
+
 (defun load-class-info (class-name)
   (let ((cl (find-class class-name)))
     (list (cons :name (class-name cl))
           (cons :documentation (documentation cl 'type))
+          (cons :slots (load-slots cl))
           (cons :methods (load-specialisation-info cl)))))
 
 (define-handler-fn show-package-screen "/show_package"

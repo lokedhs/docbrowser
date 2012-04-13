@@ -52,6 +52,20 @@
           </blockquote>
           <% end %>
 
+          <% if slots %>
+          <h4>Slots</h4>
+          <% for slots %>
+          <div>
+            <span class="sourceStyle"><% #name %></span>
+            <% if documentation %>
+            <blockquote>
+              <pre><% #documentation %></pre>
+            </blockquote>
+            <% end %>
+          </div>
+          <% end %>
+          <% end %>
+
           <% if methods %>
           <h4>Specialised by</h4>
           <% for methods %>

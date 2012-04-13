@@ -24,5 +24,6 @@
                         :serial t
                         :depends-on ("template")
                         :components ((:file "package")
+                                     (:file "misc")
                                      (:file "server")
                                      (:file "docbrowser")))))

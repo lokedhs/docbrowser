@@ -47,6 +47,9 @@
       (find-class symbol)
     (error nil)))
 
+(defun assoc-name (v)
+  (assoc-cdr :name v :error-p t))
+
 (defun load-specialisation-info (class)
   (let ((ignored '(initialize-instance))
         (v (if (symbolp class) (find-class class) class)))
@@ -54,16 +57,9 @@
                     for v in (sb-introspect:who-specializes-directly v)
                     for symbol = (cadar v)
                     when (and (not (member symbol ignored))
-                              (eq (nth-value 1 (find-symbol (symbol-name (cond ((symbolp symbol)
-                                                                                symbol)
-                                                                               ((eq (car symbol) 'setf)
-                                                                                (cadr symbol))
-                                                                               (t
-                                                                                (error "Unknown symbol type: ~s" symbol))))
-                                                            (symbol-package (class-name class))))
-                                  :external))
+                              (symbol-external-p symbol (symbol-package (class-name class))))
                     collect (find-method-info v))
-                 #'string< :key #'(lambda (v) (cdr (assoc :name v))))))
+                 #'string< :key #'assoc-name)))
 
 (defun load-class-info (class-name)
   (let ((cl (find-class class-name)))
@@ -83,10 +79,7 @@
              finally (return (list functions variables classes)))
         (template:exec-template-file (concatenate 'string *files-base-dir* "template/show_package.tmpl")
                                      `((:name      . ,(package-name package))
-                                       (:functions . ,(sort functions #'string<
-                                                            :key #'(lambda (v) (cdr (assoc :name v)))))
-                                       (:variables . ,(sort variables #'string<
-                                                            :key #'(lambda (v) (cdr (assoc :name v)))))
-                                       (:classes   . ,(sort classes #'string<
-                                                            :key #'(lambda (v) (cdr (assoc :name v))))))
+                                       (:functions . ,(sort functions #'string< :key #'assoc-name))
+                                       (:variables . ,(sort variables #'string< :key #'assoc-name))
+                                       (:classes   . ,(sort classes #'string< :key #'assoc-name)))
                                      out)))))

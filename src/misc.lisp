@@ -3,6 +3,8 @@
 (declaim #.*compile-decl*)
 
 (defun assoc-cdr (key data &key error-p)
+  "Return (CDR (ASSOC KEY DATA)). If ERROR-P is non-NIL, signal an error if KEY is
+not available is DATA."
   (let ((v (assoc key data)))
     (when (and error-p
                (not v))

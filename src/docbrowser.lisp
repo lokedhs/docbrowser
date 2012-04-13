@@ -15,16 +15,12 @@
                                    `((:packages . ,packages))
                                    out))))
 
-(defun resolve-arglist (function)
-  #+sbcl (sb-introspect:function-lambda-list function)
-  #-sbcl nil)
-
 (defun load-function-info (symbol)
   (let ((function (symbol-function symbol)))
     (list (cons :name (string symbol))
           (cons :documentation (documentation symbol 'function))
           (cons :args (let ((*print-case* :downcase))
-                        (format nil "~{~a~^ ~}" (resolve-arglist function)))))))
+                        (format nil "~{~a~^ ~}" (swank-backend:arglist function)))))))
 
 (defun load-variable-info (symbol)
   (list (cons :name (string symbol))
@@ -53,13 +49,13 @@
 (defun load-specialisation-info (class)
   (let ((ignored '(initialize-instance))
         (v (if (symbolp class) (find-class class) class)))
-    #+sbcl (sort (loop
-                    for v in (sb-introspect:who-specializes-directly v)
-                    for symbol = (cadar v)
-                    when (and (not (member symbol ignored))
-                              (symbol-external-p symbol (symbol-package (class-name class))))
-                    collect (find-method-info v))
-                 #'string< :key #'assoc-name)))
+    (sort (loop
+             for v in (swank-backend:who-specializes v)
+             for symbol = (cadar v)
+             when (and (not (member symbol ignored))
+                       (symbol-external-p symbol (symbol-package (class-name class))))
+             collect (find-method-info v))
+          #'string< :key #'assoc-name)))
 
 (defun load-class-info (class-name)
   (let ((cl (find-class class-name)))

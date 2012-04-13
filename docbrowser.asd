@@ -13,7 +13,8 @@
                :yacc
                :parse-number
                :babel
-               :closer-mop)
+               :closer-mop
+               :swank)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

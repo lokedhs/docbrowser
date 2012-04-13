@@ -82,6 +82,8 @@ occurred. Either the entire line, or part of it.")
                       ("@"      '|@|)
                       ("#"      '|#|)
                       ("\\."    '|.|)
+                      ("/"      '|/|)
+                      (":"      '|:|)
                       ("([a-zA-Z_][a-zA-Z_0-9-]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
                       ("\"((?:(?:\\\\\")|[^\"])*)\"" (lambda (exprs)
                                                        (list 'string (escape-string-slashes (aref exprs 0)))))
@@ -231,7 +233,7 @@ occurred. Either the entire line, or part of it.")
 
 (short-define-parser *template-parser* ((:start-symbol document)
                                         (:terminals (template symbol string if end else while repeat number for with
-                                                              |,| |=| |(| |)| |@| |#| |.|))
+                                                              |,| |=| |(| |)| |@| |#| |.| |/| |:|))
                                         (:precedence ((:right template))))
                      
   (document
@@ -300,13 +302,21 @@ occurred. Either the entire line, or part of it.")
    ((symbol)     `(cdr (assoc ,(string->symbol symbol "KEYWORD") *current-content*)))
    ((|.|)        '*current-content*)
    ((|,| symbol) (string->symbol symbol))
-   ((string)     string))
+   ((string)     string)
+   (((|/| v1) interned-symbol (|/| v3) expression)
+    `(funcall ',interned-symbol ,expression)))
 
   (expression
-   ((data) data #+nil`(cdr (assoc ,data *current-content*))))
+   ((data) data))
 
   (number-expr
    ((number) number))
+
+  (interned-symbol
+   (((symbol symbol1) |:| (symbol symbol2))
+    (intern (string-upcase symbol2) (string-upcase symbol1)))
+   (((symbol symbol1))
+    (intern (string-upcase symbol1) "CL-USER")))
 
 )
 

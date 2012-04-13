@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>jQuery UI Multi Open Accordion</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=8"/>
+	<link type="text/css" rel="stylesheet" href="css/jquery-ui-1.8.9.custom/jquery-ui-1.8.9.custom.css" />
+	<script type="text/javascript" src="jquery-1.4.3.min.js"></script>	
+	<script type="text/javascript" src="jquery-ui-1.8.13.custom.min.js"></script>
+	<script type="text/javascript" src="jquery.multi-accordion-1.5.3.js"></script>
+	<style type="text/css">
+		/*demo page css*/
+		body{ font: 62.5% "Trebuchet MS", sans-serif; margin: 50px;}
+	</style>	
+</head>
+<body>
+	<div id="multiAccordion">
+		<h3><a href="#">tab 1</a></h3>
+		<div>
+			Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		</div>
+		<h3><a href="#">tab 2</a></h3>
+		<div>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut eu mauris nulla, at cursus nulla. Morbi venenatis, risus sit amet ultricies pharetra, lorem purus tempor risus, vel tincidunt lectus nisi sit amet neque. Aenean sit amet nibh orci, a gravida eros. Pellentesque dignissim, libero eu congue semper, mauris metus molestie nisi, vitae posuere felis leo ac lectus. Mauris a nisi eget sapien varius eleifend vel vel nibh. In placerat commodo blandit. Vivamus sagittis ante sed nisl sodales id luctus diam dapibus. Proin a felis tristique nulla rhoncus sollicitudin. Nullam sit amet neque augue. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce at nisi sapien.
+		</div>
+		<h3><a href="#">tab 3</a></h3>
+		<div>
+			Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+		</div>
+		<h3><a href="#">tab 4</a></h3>
+		<div>
+			Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut eu mauris nulla, at cursus nulla. Morbi venenatis, risus sit amet ultricies pharetra, lorem purus tempor risus, vel tincidunt lectus nisi sit amet neque. Aenean sit amet nibh orci, a gravida eros. Pellentesque dignissim, libero eu congue semper, mauris metus molestie nisi, vitae posuere felis leo ac lectus. Mauris a nisi eget sapien varius eleifend vel vel nibh. In placerat commodo blandit. Vivamus sagittis ante sed nisl sodales id luctus diam dapibus. Proin a felis tristique nulla rhoncus sollicitudin. Nullam sit amet neque augue. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Fusce at nisi sapien.
+		</div>
+	</div>
+	<script type="text/javascript">
+		$(function(){
+			$('#multiAccordion').multiAccordion({
+				active: [1, 2],
+				click: function(event, ui) {
+					//console.log('clicked')
+				},
+				init: function(event, ui) {
+					//console.log('whoooooha')
+				},
+				tabShown: function(event, ui) {
+					//console.log('shown')
+				},
+				tabHidden: function(event, ui) {
+					//console.log('hidden')
+				}
+				
+			});
+			
+			$('#multiAccordion').multiAccordion("option", "active", [0, 3]);
+		});
+	</script>
+	
+</body>
+</html>

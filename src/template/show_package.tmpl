@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="/css/ui-lightness/jquery-ui-1.8.18.custom.css">
     <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="/jquery-multi-open-accordion/jquery.multi-accordion-1.5.3.js"></script>
     <script type="text/javascript" src="/js/show_package.js"></script>
     <style>
       .sourceStyle { font-family: Monospace }
@@ -52,28 +53,38 @@
           </blockquote>
           <% end %>
 
-          <% if slots %>
-          <h4>Slots</h4>
-          <% for slots %>
-          <div>
-            <span class="sourceStyle"><% #name %></span>
-            <% if documentation %>
-            <blockquote>
-              <pre><% #documentation %></pre>
-            </blockquote>
-            <% end %>
-          </div>
-          <% end %>
-          <% end %>
+          <div class="revealTable">
+            <h3><a href="#">Slots</a></h3>
+            <div>
+              <% if slots %>
+              <% for slots %>
+              <div>
+                <span class="sourceStyle"><% #name %></span>
+                <% if documentation %>
+                <blockquote>
+                  <pre><% #documentation %></pre>
+                </blockquote>
+                <% end %>
+              </div>
+              <% end %>
+              <% else %>
+              No slots
+              <% end %>
+            </div>
 
-          <% if methods %>
-          <h4>Specialised by</h4>
-          <% for methods %>
-          <div>
-            <span class="sourceStyle"><% #name %></span>
+            <h3><a href="#">Specialised by</a></h3>
+            <div>
+              <% if methods %>
+              <% for methods %>
+              <div>
+                <span class="sourceStyle"><% #name %></span>
+              </div>
+              <% end %>
+              <% else %>
+              No specialised methods
+              <% end %>
+            </div>
           </div>
-          <% end %>
-          <% end %>
 
           <hr>
 

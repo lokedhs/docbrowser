@@ -17,7 +17,7 @@
                                                                       (pathname (concatenate 'string
                                                                                              *files-base-dir*
                                                                                              "files/" path "/"))))
-                '("css" "js"))))
+                '("css" "js" "jquery-multi-open-accordion"))))
 
 (defvar *url-handlers* (make-hash-table :test 'equal)
   "A hash table keyed on the base URL that maps to the underlying handler function")

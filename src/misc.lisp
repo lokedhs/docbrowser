@@ -23,3 +23,9 @@ the CADR of the list."
                                                     (error "Unknown symbol type: ~s" symbol))))
                                 package))
       :external))
+
+(defun nice-princ-to-string (obj)
+  (typecase obj
+    (string obj)
+    (keyword (prin1-to-string obj))
+    (t (princ-to-string obj))))

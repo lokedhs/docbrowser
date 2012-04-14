@@ -16,11 +16,10 @@
                                    out))))
 
 (defun load-function-info (symbol)
-  (let ((function (symbol-function symbol)))
-    (list (cons :name (string symbol))
-          (cons :documentation (documentation symbol 'function))
-          (cons :args (let ((*print-case* :downcase))
-                        (format nil "~{~a~^ ~}" (swank-backend:arglist function)))))))
+  (list (cons :name (string symbol))
+        (cons :documentation (documentation symbol 'function))
+        (cons :args (let ((*print-case* :downcase))
+                      (format nil "~{~a~^ ~}" (mapcar #'nice-princ-to-string (swank-backend:arglist symbol)))))))
 
 (defun load-variable-info (symbol)
   (list (cons :name (string symbol))
@@ -34,9 +33,8 @@
              append (load-specialisation-info parent-class))
           (list (class-name class))))
 
-(defun find-method-info (method)
-  (let ((symbol (cadar method)))
-    (list (cons :name (princ-to-string symbol)))))
+(defun find-method-info (symbol)
+  (list (cons :name (princ-to-string symbol))))
 
 (defun safe-class-for-symbol (symbol)
   (handler-case
@@ -46,15 +44,21 @@
 (defun assoc-name (v)
   (assoc-cdr :name v :error-p t))
 
-(defun load-specialisation-info (class)
+(defun specialise->symbol (spec)
+  (case (caar spec)
+    ((defmethod) (cadar spec))
+    #+ccl((ccl::reader-method) (cadr (assoc :method (cdar spec))))
+    (t nil)))
+
+(defun load-specialisation-info (class-name)
   (let ((ignored '(initialize-instance))
-        (v (if (symbolp class) (find-class class) class)))
+        (class (if (symbolp class-name) (find-class class-name) class-name)))
     (sort (loop
-             for v in (swank-backend:who-specializes v)
-             for symbol = (cadar v)
+             for v in (swank-backend:who-specializes class)
+             for symbol = (specialise->symbol v)
              when (and (not (member symbol ignored))
                        (symbol-external-p symbol (symbol-package (class-name class))))
-             collect (find-method-info v))
+             collect (find-method-info symbol))
           #'string< :key #'assoc-name)))
 
 (defun load-slots (class)

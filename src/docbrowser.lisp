@@ -65,7 +65,7 @@
   (closer-mop:ensure-finalized class)
   (flet ((load-slot (slot)
            (list (cons :name (closer-mop:slot-definition-name slot))
-                 (cons :documentation (documentation slot t)))))
+                 (cons :documentation (swank-mop:slot-definition-documentation slot)))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
 
 (defun load-class-info (class-name)

@@ -3,7 +3,8 @@
   (:export
    :parse-template
    :exec-template-file-to-string 
-   :exec-template-file))
+   :exec-template-file
+   :template-error))
 
 (in-package :template)
 

@@ -11,9 +11,9 @@
                                       (package-name package))
                                   (list-all-packages))
                           #'string<)))
-      (template:exec-template-file (concatenate 'string *files-base-dir* "template/packages.tmpl")
-                                   `((:packages . ,packages))
-                                   out))))
+      (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir* "template/packages.tmpl")
+                                              `((:packages . ,packages))
+                                              out))))
 
 (defun load-function-info (symbol)
   (list (cons :name (string symbol))
@@ -85,9 +85,9 @@
              when (boundp s) collect (load-variable-info s) into variables
              when (safe-class-for-symbol s) collect (load-class-info s) into classes
              finally (return (list functions variables classes)))
-        (template:exec-template-file (concatenate 'string *files-base-dir* "template/show_package.tmpl")
-                                     `((:name      . ,(package-name package))
-                                       (:functions . ,(sort functions #'string< :key #'assoc-name))
-                                       (:variables . ,(sort variables #'string< :key #'assoc-name))
-                                       (:classes   . ,(sort classes #'string< :key #'assoc-name)))
-                                     out)))))
+        (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir* "template/show_package.tmpl")
+                                                `((:name      . ,(package-name package))
+                                                  (:functions . ,(sort functions #'string< :key #'assoc-name))
+                                                  (:variables . ,(sort variables #'string< :key #'assoc-name))
+                                                  (:classes   . ,(sort classes #'string< :key #'assoc-name)))
+                                                out)))))

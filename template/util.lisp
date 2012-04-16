@@ -3,9 +3,11 @@
 ;;; That project is also BSD licensed, so it should be OK?
 ;;;
 
-(in-package :template)
+(in-package :docbrowser-template)
 
 (declaim #.*compile-decl*)
+
+(defvar *escape-char-p* nil)
 
 (defun escape-string (string &key (test *escape-char-p*))
   "Escape all characters in STRING which pass TEST. This function is

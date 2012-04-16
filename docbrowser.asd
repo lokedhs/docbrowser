@@ -8,7 +8,7 @@
   :name "docbrowser"
   :author "Elias Martenson <lokedhs@gmail.com>"
   :license "BSD"
-  :description "Documentation browser for SBCL"
+  :description "Web-based documentation browser"
   :depends-on (:hunchentoot
                :bordeaux-threads
                :yacc

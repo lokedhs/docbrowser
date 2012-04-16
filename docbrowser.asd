@@ -1,5 +1,6 @@
 (defpackage :docbrowser-system
-  (:use :cl :asdf))
+  (:use :cl :asdf)
+  (:documentation "private: ASDF system package for Docbrowser."))
 
 (in-package :docbrowser-system)
 

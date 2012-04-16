@@ -8,7 +8,12 @@
 
     <% for packages %>
     <div>
-      <a href="show_package?id=<% #. %>"><% #. %></a>
+      <span class="sourceStyle"><a href="show_package?id=<% #. %>"><% #name %></a></span>
+      <% if documentation %>
+      <blockquote>
+        <pre><% #documentation %></pre>
+      </blockquote>
+      <% end %>
     </div>
     <% end %>
 

@@ -8,9 +8,10 @@
 (define-handler-fn package-list-screen "/package_list"
   (with-hunchentoot-stream (out)
     (let ((packages (sort (mapcar #'(lambda (package)
-                                      (package-name package))
+                                      (list (cons :name (package-name package))
+                                            (cons :documentation (documentation package t))))
                                   (list-all-packages))
-                          #'string<)))
+                          #'string< :key #'(lambda (v) (cdr (assoc :name v))))))
       (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir* "template/packages.tmpl")
                                               `((:packages . ,packages))
                                               out))))

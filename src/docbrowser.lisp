@@ -78,7 +78,7 @@ will make documentation for slots in conditions work properly."
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)
   (flet ((load-slot (slot)
-           (list (cons :name (closer-mop:slot-definition-name slot))
+           (list (cons :name (string (closer-mop:slot-definition-name slot)))
                  (cons :documentation (swank-mop:slot-definition-documentation slot)))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
 

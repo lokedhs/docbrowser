@@ -2,6 +2,12 @@
 
 (declaim #.*compile-decl*)
 
+#+sbcl(defmethod documentation ((slot sb-pcl::effective-slot-definition) (type t))
+        "SBCL doesn't have a proper implementation of DOCUMENTATION for instances of
+EFFECTIVE-SLOT-DEFINITION, but instead prints a warning when an attempt is make to
+access it. This method will suppress this warning."
+        nil)
+
 (define-handler-fn main-screen "/"
   (hunchentoot:redirect "/package_list"))
 
@@ -20,7 +26,9 @@
   (list (cons :name (string symbol))
         (cons :documentation (documentation symbol 'function))
         (cons :args (let ((*print-case* :downcase))
-                      (format nil "~{~a~^ ~}" (mapcar #'nice-princ-to-string (swank-backend:arglist symbol)))))))
+                      (format nil "~{~a~^ ~}" (mapcar #'nice-princ-to-string (swank-backend:arglist symbol)))))
+        (cons :type (cond ((macro-function symbol) "macro")
+                          (t "function")))))
 
 (defun load-variable-info (symbol)
   (list (cons :name (string symbol))

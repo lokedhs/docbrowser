@@ -9,17 +9,14 @@
     <script type="text/javascript" src="/js/msgpack.js"></script>
     <script type="text/javascript" src="/js/show_package.js"></script>
     <style>
-      .sourceStyle { font-family: Monospace }
+      .sourceStyle { font-family: Monospace; }
+      .typeStyle { font-family: Monospace; font-size: 10px; }
       h3 { font-weight: normal }
     </style>
   </head>
   <body>
     
     <div class="package-list">
-      <!--
-          <h1>Package <span class="sourceStyle"><% #name %></span></h1>
-          -->
-
       <div id="tabs">
         <ul>
           <li><a href="#tabs-functions">Functions</a></li>
@@ -30,7 +27,12 @@
         <div id="tabs-functions">
           <% for functions %>
           <h3>
-            <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
+            <div class="typeStyle">
+              <% #type %>
+            </div>
+            <div>
+              <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
+            </div>
           </h3>
           <div>
             <% if documentation %>
@@ -39,6 +41,7 @@
             </blockquote>
             <% end %>
           </div>
+          <hr>
           <% end %>
         </div>
 

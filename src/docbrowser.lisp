@@ -65,15 +65,17 @@ will make documentation for slots in conditions work properly."
     (t nil)))
 
 (defun load-specialisation-info (class-name)
-  (let ((ignored '(initialize-instance))
-        (class (if (symbolp class-name) (find-class class-name) class-name)))
-    (sort (loop
-             for v in (swank-backend:who-specializes class)
-             for symbol = (specialise->symbol v)
-             when (and (not (member symbol ignored))
-                       (symbol-external-p symbol (symbol-package (class-name class))))
-             collect (find-method-info symbol))
-          #'string< :key #'assoc-name)))
+  (let* ((ignored '(initialize-instance))
+         (class (if (symbolp class-name) (find-class class-name) class-name))
+         (spec (swank-backend:who-specializes class)))
+    (unless (eq spec :not-implemented)
+      (sort (loop
+               for v in spec
+               for symbol = (specialise->symbol v)
+               when (and (not (member symbol ignored))
+                         (symbol-external-p symbol (symbol-package (class-name class))))
+               collect (find-method-info symbol))
+            #'string< :key #'assoc-name))))
 
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)

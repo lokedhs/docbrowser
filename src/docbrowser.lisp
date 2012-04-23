@@ -19,11 +19,20 @@ will make documentation for slots in conditions work properly."
                           #'string< :key #'(lambda (v) (cdr (assoc :name v))))))
       (show-template out "packages.tmpl" `((:packages . ,packages))))))
 
+(defun format-argument-to-string (arg)
+  (etypecase arg
+    (symbol (nice-princ-to-string arg))
+    (list   (mapcar #'(lambda (entry conversion) (funcall conversion entry))
+                    arg (list #'nice-princ-to-string
+                              #'(lambda (entry)
+                                  (prin1-to-string-with-package entry (symbol-package (car arg))))
+                              #'nice-princ-to-string)))))
+
 (defun load-function-info (symbol)
   (list (cons :name (string symbol))
         (cons :documentation (documentation symbol 'function))
         (cons :args (let ((*print-case* :downcase))
-                      (format nil "~{~a~^ ~}" (mapcar #'nice-princ-to-string (swank-backend:arglist symbol)))))
+                      (format nil "~{~a~^ ~}" (mapcar #'format-argument-to-string (swank-backend:arglist symbol)))))
         (cons :type (cond ((macro-function symbol) "macro")
                           (t "function")))))
 
@@ -31,7 +40,7 @@ will make documentation for slots in conditions work properly."
   (list (cons :name (string symbol))
         (cons :documentation (documentation symbol 'variable))
         (cons :boundp (boundp symbol))
-        (cons :value (when (boundp symbol) (princ-to-string (symbol-value symbol))))))
+        (cons :value (when (boundp symbol) (prin1-to-string (symbol-value symbol))))))
 
 (defun find-superclasses (class)
   (append (loop

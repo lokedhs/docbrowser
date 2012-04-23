@@ -29,3 +29,7 @@ the CADR of the list."
     (string obj)
     (keyword (prin1-to-string obj))
     (t (princ-to-string obj))))
+
+(defun prin1-to-string-with-package (obj package)
+  (let ((*package* package))
+    (prin1-to-string obj)))

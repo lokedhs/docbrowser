@@ -2,12 +2,6 @@
 
 (declaim #.*compile-decl*)
 
-#+sbcl(defmethod documentation ((slot sb-pcl::effective-slot-definition) (type t))
-        "SBCL doesn't have a proper implementation of DOCUMENTATION for instances of
-EFFECTIVE-SLOT-DEFINITION, but instead prints a warning when an attempt is make to
-access it. This method will suppress this warning."
-        nil)
-
 (define-handler-fn main-screen "/"
   (hunchentoot:redirect "/package_list"))
 

@@ -62,6 +62,11 @@ written to."
   `(let ((,out (hunchentoot-stream-as-text :content-type ,content-type :append-charset ,append-charset)))
      ,@body))
 
+(defun show-template (out file data)
+  (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir*
+                                                       "template/" file)
+                                          data out))
+
 (defvar *global-acceptor* nil
   "The acceptor for the currently running server.")
 

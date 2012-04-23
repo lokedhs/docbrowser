@@ -28,4 +28,5 @@
                         :components ((:file "package")
                                      (:file "misc")
                                      (:file "server")
-                                     (:file "docbrowser")))))
+                                     (:file "docbrowser")
+                                     (:file "search")))))

@@ -17,9 +17,7 @@ will make documentation for slots in conditions work properly."
                                             (cons :documentation (documentation package t))))
                                   (list-all-packages))
                           #'string< :key #'(lambda (v) (cdr (assoc :name v))))))
-      (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir* "template/packages.tmpl")
-                                              `((:packages . ,packages))
-                                              out))))
+      (show-template out "packages.tmpl" `((:packages . ,packages))))))
 
 (defun load-function-info (symbol)
   (list (cons :name (string symbol))
@@ -95,9 +93,7 @@ will make documentation for slots in conditions work properly."
              when (boundp s) collect (load-variable-info s) into variables
              when (safe-class-for-symbol s) collect (load-class-info s) into classes
              finally (return (list functions variables classes)))
-        (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir* "template/show_package.tmpl")
-                                                `((:name      . ,(package-name package))
-                                                  (:functions . ,(sort functions #'string< :key #'assoc-name))
-                                                  (:variables . ,(sort variables #'string< :key #'assoc-name))
-                                                  (:classes   . ,(sort classes #'string< :key #'assoc-name)))
-                                                out)))))
+        (show-template out "show_package.tmpl" `((:name      . ,(package-name package))
+                                                 (:functions . ,(sort functions #'string< :key #'assoc-name))
+                                                 (:variables . ,(sort variables #'string< :key #'assoc-name))
+                                                 (:classes   . ,(sort classes #'string< :key #'assoc-name))))))))

@@ -15,7 +15,8 @@
                :parse-number
                :babel
                :closer-mop
-               :swank)
+               :swank
+               :cl-json)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

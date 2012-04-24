@@ -23,15 +23,18 @@ will make documentation for slots in conditions work properly."
   (etypecase arg
     (symbol (nice-princ-to-string arg))
     (list   (mapcar #'(lambda (entry conversion) (funcall conversion entry))
-                    arg (list #'nice-princ-to-string
-                              #'(lambda (entry)
-                                  (prin1-to-string-with-package entry (symbol-package (car arg))))
+                    arg (list #'(lambda (v)
+                                  (if (listp v)
+                                      (nice-princ-to-string (car v))
+                                      (nice-princ-to-string v)))
+                              #'prin1-to-string
                               #'nice-princ-to-string)))))
 
 (defun load-function-info (symbol)
   (list (cons :name (string symbol))
         (cons :documentation (documentation symbol 'function))
-        (cons :args (let ((*print-case* :downcase))
+        (cons :args (let ((*print-case* :downcase)
+                          (*package* (symbol-package symbol)))
                       (format nil "~{~a~^ ~}" (mapcar #'format-argument-to-string (swank-backend:arglist symbol)))))
         (cons :type (cond ((macro-function symbol) "macro")
                           (t "function")))))

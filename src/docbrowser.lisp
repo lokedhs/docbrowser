@@ -88,12 +88,24 @@ will make documentation for slots in conditions work properly."
                  (cons :documentation (swank-mop:slot-definition-documentation slot)))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
 
+(defun load-accessor-info (class)
+  (flet ((method->name (method)
+           (closer-mop:generic-function-name (closer-mop:method-generic-function method))))
+    (loop
+       for method in (closer-mop:specializer-direct-methods class)
+       if (typep method 'closer-mop:standard-reader-method)
+       collect (method->name method) into reader-methods
+       if (typep method 'closer-mop:standard-writer-method)
+       collect (method->name method) into writer-methods
+       finally (return (list reader-methods writer-methods)))))
+
 (defun load-class-info (class-name)
   (let ((cl (find-class class-name)))
-    (list (cons :name (class-name cl))
+    (list (cons :name          (class-name cl))
           (cons :documentation (documentation cl 'type))
-          (cons :slots (load-slots cl))
-          (cons :methods (load-specialisation-info cl)))))
+          (cons :slots         (load-slots cl))
+          (cons :methods       (load-specialisation-info cl))
+          (cons :accessors     (load-accessor-info cl)))))
 
 (define-handler-fn show-package-screen "/show_package"
   (with-hunchentoot-stream (out)

@@ -75,7 +75,19 @@
               <% end %>
             </div>
 
-            <h3><a href="#">Specialised by (<%# /length/methods %>)</a></h3>
+            <h3><a href="#">Accessor methods (<% #/length/accessors %>)</a></h3>
+            <% if accessors for accessors %>
+            <div>
+              <span class="sourceStyle"><%#name%></span> <%#type%>
+            </div>
+            <% end else %>
+            No accessor methods
+            <% end %>
+            <div>
+              
+            </div>
+
+            <h3><a href="#">Specialised by (<% #/length/methods %>)</a></h3>
             <div>
               <% if methods %>
               <% for methods %>

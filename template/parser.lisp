@@ -16,7 +16,7 @@
                   :initarg :line
                   :initform (error "~s required when creating ~s" :line 'template-error)
                   :reader template-error-line
-                  :documentation "The line number where the error occurred")
+                  :documentation "The line number where the error occurred.")
    (column        :type (or nil integer)
                   :initarg :column
                   :initform nil

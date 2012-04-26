@@ -61,8 +61,8 @@
             <div>
               <% if slots %>
               <% for slots %>
-                <span class="sourceStyle"><b><% #name %></b></span>
-                <div>
+              <span class="sourceStyle"><b><% #name %></b><% if accessors %> &#8212; <% #accessors end %></span>
+              <div>
                 <% if documentation %>
                 <blockquote>
                   <pre><% #documentation %></pre>
@@ -73,18 +73,6 @@
               <% else %>
               No slots
               <% end %>
-            </div>
-
-            <h3><a href="#">Accessor methods (<% #/length/accessors %>)</a></h3>
-            <% if accessors for accessors %>
-            <div>
-              <span class="sourceStyle"><%#name%></span> <%#type%>
-            </div>
-            <% end else %>
-            No accessor methods
-            <% end %>
-            <div>
-              
             </div>
 
             <h3><a href="#">Specialised by (<% #/length/methods %>)</a></h3>

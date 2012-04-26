@@ -81,35 +81,68 @@ will make documentation for slots in conditions work properly."
                collect (find-method-info symbol))
             #'string< :key #'assoc-name))))
 
+(defun %ensure-external (symbol)
+  (let ((name (cond ((symbolp symbol)
+                     symbol)
+                    ((and (listp symbol) (eq (car symbol) 'setf))
+                     (cadr symbol))
+                    (t
+                     (warn "Unknown type: ~s. Expected symbol or SETF form." symbol)
+                     nil))))
+    (when (symbol-external-p name)
+      symbol)))
+
+(defun load-accessor-info (class slot)
+  (flet ((getmethod (readerp method-list)
+           (dolist (method method-list)
+             (let ((name (closer-mop:generic-function-name (closer-mop:method-generic-function method))))
+               (when (and (eq (type-of method) (if readerp
+                                                   'closer-mop:standard-reader-method
+                                                   'closer-mop:standard-writer-method))
+                          (eq (closer-mop:slot-definition-name (closer-mop:accessor-method-slot-definition method))
+                              (closer-mop:slot-definition-name slot)))
+                 (return-from getmethod name))))))
+
+    ;; There are several different situations we want to detect:
+    ;;   1) Only a reader method: "reader FOO"
+    ;;   2) Only a writer method: "writer FOO"
+    ;;   3) Only a writer SETF method: "writer (SETF FOO)"
+    ;;   4) A reader and a SETF method: "accessor FOO"
+    ;;   5) A reader and non-SETF writer: "reader FOO, writer FOO"
+    ;;
+    ;; We start by assigning the reader and writer methods to variables
+    (let* ((method-list (closer-mop:specializer-direct-methods class))
+           (reader (%ensure-external (getmethod t method-list)))
+           (writer (%ensure-external (getmethod nil method-list))))
+      ;; Now, detect the 5 different cases, but we coalease case 2 and 3.
+      (cond ((and reader (null writer))
+             (format nil "reader ~s" reader))
+            ((and (null reader) writer)
+             (format nil "writer ~s" writer))
+            ((and reader (listp writer) (eq (car writer) 'setf) (eq (cadr writer) reader))
+             (format nil "accessor ~s" reader))
+            ((and reader writer)
+             (format nil "reader ~s, writer ~s" reader writer))))))
+
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)
   (flet ((load-slot (slot)
            (list (cons :name (string (closer-mop:slot-definition-name slot)))
-                 (cons :documentation (swank-mop:slot-definition-documentation slot)))))
+                 (cons :documentation (swank-mop:slot-definition-documentation slot))
+                 (cons :accessors (load-accessor-info class slot)))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
-
-(defun load-accessor-info (class)
-  (flet ((method->name (method)
-           (closer-mop:generic-function-name (closer-mop:method-generic-function method))))
-    (loop
-       for method in (closer-mop:specializer-direct-methods class)
-       if (typep method 'closer-mop:standard-reader-method)
-       collect (method->name method) into reader-methods
-       if (typep method 'closer-mop:standard-writer-method)
-       collect (method->name method) into writer-methods
-       finally (return (list reader-methods writer-methods)))))
 
 (defun load-class-info (class-name)
   (let ((cl (find-class class-name)))
     (list (cons :name          (class-name cl))
           (cons :documentation (documentation cl 'type))
           (cons :slots         (load-slots cl))
-          (cons :methods       (load-specialisation-info cl))
-          (cons :accessors     (load-accessor-info cl)))))
+          (cons :methods       (load-specialisation-info cl)))))
 
 (define-handler-fn show-package-screen "/show_package"
   (with-hunchentoot-stream (out)
-    (let ((package (find-package (hunchentoot:parameter "id"))))
+    (let* ((package (find-package (hunchentoot:parameter "id")))
+           (*package* package))
       (destructuring-bind (functions variables classes)
           (loop
              for s being each external-symbol in package

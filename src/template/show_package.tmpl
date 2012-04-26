@@ -65,9 +65,9 @@
                 <% if accessors %>
                 &#8212;
                 <% for accessors %>
-                <% if reader %>reader <% #reader end %>
-                <% if writer %>writer <% #writer end %>
-                <% if accessor %>accessor <% #accessor end %>
+                <% if reader %>reader <b><% #reader %></b><% end %>
+                <% if writer %>writer <b><% #writer %></b><% end %>
+                <% if accessor %>accessor <b><% #accessor %></b><% end %>
                 <% end #| FOR ACCESSORS |# %>
                 <% end #| IF ACCESSORS |# %>
               </span>

@@ -123,20 +123,22 @@ will make documentation for slots in conditions work properly."
            (writer (%ensure-external (getmethod nil method-list))))
       ;; Now, detect the 5 different cases, but we coalease case 2 and 3.
       (cond ((and reader (null writer))
-             `(((:reader . ,reader))))
+             `((:reader . ,reader)))
             ((and (null reader) writer)
-             `(((:writer . ,writer))))
+             `((:writer . ,writer)))
             ((and reader (listp writer) (eq (car writer) 'setf) (eq (cadr writer) reader))
-             `(((:accessor . ,reader))))
+             `((:accessor . ,reader)))
             ((and reader writer)
-             `(((:reader . ,reader)) (:writer . ,writer)))))))
+             `((:reader . ,reader) (:writer . ,writer)))))))
 
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)
   (flet ((load-slot (slot)
            (list (cons :name (string (closer-mop:slot-definition-name slot)))
                  (cons :documentation (swank-mop:slot-definition-documentation slot))
-                 (cons :accessors (load-accessor-info class slot)))))
+                 ;; The LIST call below is because the accessor lookup is wrapped
+                 ;; in a FOR statement in the template.
+                 (cons :accessors (list (load-accessor-info class slot))))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
 
 (defun load-class-info (class-name)
@@ -155,25 +157,11 @@ will make documentation for slots in conditions work properly."
            for slot-info in (cdr (assoc :slots class-info))
            do (loop
                  for accessor in (cdr (assoc :accessors slot-info))
-                 for accessor-sym = (cdr accessor)
+                 for accessor-sym = (cdar accessor)
                  when (or (and (symbolp accessor-sym) (eq accessor-sym name))
                           (and (listp accessor-sym) (eq (car accessor-sym) 'setf) (eq (cadr accessor-sym) name)))
                  do (return-from %annotate-function-info (append fn-info '((:accessorp t))))))
      finally (return fn-info)))
-#|
-This has to work:
-
-(%annotate-function-info '((:NAME . FOO-VALUE))
-                                     '(((:NAME . FOO) (:DOCUMENTATION)
-   (:SLOTS
-    ((:NAME . "NAME") (:DOCUMENTATION) (:ACCESSORS (:READER . FOO-NAME)))
-    ((:NAME . "VALUE") (:DOCUMENTATION) (:ACCESSORS (:ACCESSOR . FOO-VALUE)))
-    ((:NAME . "VAL2") (:DOCUMENTATION)
-     (:ACCESSORS (:READER . FOO-VAL2) (:WRITER . SET-FOO-VAL2))))
-   (:METHODS ((:NAME . "(SETF FOO-VALUE)")) ((:NAME . "FOO-NAME"))
-    ((:NAME . "FOO-VAL2")) ((:NAME . "FOO-VALUE"))
-    ((:NAME . "SET-FOO-VAL2"))))))
-|#
 
 (define-handler-fn show-package-screen "/show_package"
   (with-hunchentoot-stream (out)

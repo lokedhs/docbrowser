@@ -138,7 +138,7 @@ will make documentation for slots in conditions work properly."
                  (cons :documentation (swank-mop:slot-definition-documentation slot))
                  ;; The LIST call below is because the accessor lookup is wrapped
                  ;; in a FOR statement in the template.
-                 (cons :accessors (list (load-accessor-info class slot))))))
+                 (cons :accessors (let ((accessor-list (load-accessor-info class slot))) (when accessor-list (list accessor-list)))))))
     (mapcar #'load-slot (closer-mop:class-slots class))))
 
 (defun load-class-info (class-name)

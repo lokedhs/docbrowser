@@ -31,7 +31,7 @@ will make documentation for slots in conditions work properly."
                               #'nice-princ-to-string)))))
 
 (defun load-function-info (symbol)
-  (list (cons :name (string symbol))
+  (list (cons :name symbol)
         (cons :documentation (documentation symbol 'function))
         (cons :args (let ((*print-case* :downcase)
                           (*package* (symbol-package symbol)))
@@ -110,19 +110,26 @@ will make documentation for slots in conditions work properly."
     ;;   4) A reader and a SETF method: "accessor FOO"
     ;;   5) A reader and non-SETF writer: "reader FOO, writer FOO"
     ;;
+    ;; The return value from this function is an alist of the following form:
+    ;;
+    ;;  ((:READER . FOO-READER) (:WRITER . FOO-WRITER) (:ACCESSOR . FOO-ACCESSOR))
+    ;;
+    ;; Note that if :ACCESSOR is given, then it's guaranteed that neither
+    ;; :READER nor :WRITER will be included.
+    ;;
     ;; We start by assigning the reader and writer methods to variables
     (let* ((method-list (closer-mop:specializer-direct-methods class))
            (reader (%ensure-external (getmethod t method-list)))
            (writer (%ensure-external (getmethod nil method-list))))
       ;; Now, detect the 5 different cases, but we coalease case 2 and 3.
       (cond ((and reader (null writer))
-             (format nil "reader ~s" reader))
+             `((:reader . ,reader)))
             ((and (null reader) writer)
-             (format nil "writer ~s" writer))
+             `((:writer . ,writer)))
             ((and reader (listp writer) (eq (car writer) 'setf) (eq (cadr writer) reader))
-             (format nil "accessor ~s" reader))
+             `((:accessor . ,reader)))
             ((and reader writer)
-             (format nil "reader ~s, writer ~s" reader writer))))))
+             `((:reader . ,reader) (:writer . ,writer)))))))
 
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)
@@ -139,6 +146,28 @@ will make documentation for slots in conditions work properly."
           (cons :slots         (load-slots cl))
           (cons :methods       (load-specialisation-info cl)))))
 
+(defun %annotate-function-info (fn-info classes)
+  "Append :ACCESSORP tag if the function is present as an accessor function."
+  (if (member (cdr (assoc :name fn-info)) (mapcan #'(lambda (class)
+                                                 (mapcar #'cdr (cdr (assoc :accessors class))))
+                                             classes))
+      (append (list (cons :accessorp t)) fn-info)
+      fn-info))
+#|
+This has to work:
+
+(%annotate-function-info '((:NAME . FOO-VALUE))
+                                     '(((:NAME . FOO) (:DOCUMENTATION)
+   (:SLOTS
+    ((:NAME . "NAME") (:DOCUMENTATION) (:ACCESSORS (:READER . FOO-NAME)))
+    ((:NAME . "VALUE") (:DOCUMENTATION) (:ACCESSORS (:ACCESSOR . FOO-VALUE)))
+    ((:NAME . "VAL2") (:DOCUMENTATION)
+     (:ACCESSORS (:READER . FOO-VAL2) (:WRITER . SET-FOO-VAL2))))
+   (:METHODS ((:NAME . "(SETF FOO-VALUE)")) ((:NAME . "FOO-NAME"))
+    ((:NAME . "FOO-VAL2")) ((:NAME . "FOO-VALUE"))
+    ((:NAME . "SET-FOO-VAL2"))))))
+|#
+
 (define-handler-fn show-package-screen "/show_package"
   (with-hunchentoot-stream (out)
     (let* ((package (find-package (hunchentoot:parameter "id")))
@@ -146,10 +175,13 @@ will make documentation for slots in conditions work properly."
       (destructuring-bind (functions variables classes)
           (loop
              for s being each external-symbol in package
+             when (safe-class-for-symbol s) collect (load-class-info s) into classes
              when (fboundp s) collect (load-function-info s) into functions
              when (boundp s) collect (load-variable-info s) into variables
-             when (safe-class-for-symbol s) collect (load-class-info s) into classes
-             finally (return (list functions variables classes)))
+             finally (return (list (mapcar #'(lambda (fn)
+                                               (%annotate-function-info fn classes))
+                                           functions)
+                                   variables classes)))
         (show-template out "show_package.tmpl" `((:name      . ,(package-name package))
                                                  (:functions . ,(sort functions #'string< :key #'assoc-name))
                                                  (:variables . ,(sort variables #'string< :key #'assoc-name))

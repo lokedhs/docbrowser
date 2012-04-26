@@ -71,6 +71,7 @@ written to."
   "The acceptor for the currently running server.")
 
 (defun start-docserver (&optional (port 8080))
+  "Start the documentation server with a HTTP listener on port PORT."
   (when *global-acceptor*
     (error "Server is already running"))
     (hunchentoot:start (setq *global-acceptor* (make-instance 'docbrowser-acceptor :port port)))

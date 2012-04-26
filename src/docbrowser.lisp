@@ -123,13 +123,13 @@ will make documentation for slots in conditions work properly."
            (writer (%ensure-external (getmethod nil method-list))))
       ;; Now, detect the 5 different cases, but we coalease case 2 and 3.
       (cond ((and reader (null writer))
-             `((:reader . ,reader)))
+             `(((:reader . ,reader))))
             ((and (null reader) writer)
-             `((:writer . ,writer)))
+             `(((:writer . ,writer))))
             ((and reader (listp writer) (eq (car writer) 'setf) (eq (cadr writer) reader))
-             `((:accessor . ,reader)))
+             `(((:accessor . ,reader))))
             ((and reader writer)
-             `((:reader . ,reader) (:writer . ,writer)))))))
+             `(((:reader . ,reader)) (:writer . ,writer)))))))
 
 (defun load-slots (class)
   (closer-mop:ensure-finalized class)
@@ -148,11 +148,18 @@ will make documentation for slots in conditions work properly."
 
 (defun %annotate-function-info (fn-info classes)
   "Append :ACCESSORP tag if the function is present as an accessor function."
-  (if (member (cdr (assoc :name fn-info)) (mapcan #'(lambda (class)
-                                                 (mapcar #'cdr (cdr (assoc :accessors class))))
-                                             classes))
-      (append (list (cons :accessorp t)) fn-info)
-      fn-info))
+  (loop
+     with name = (cdr (assoc :name fn-info))
+     for class-info in classes
+     do (loop
+           for slot-info in (cdr (assoc :slots class-info))
+           do (loop
+                 for accessor in (cdr (assoc :accessors slot-info))
+                 for accessor-sym = (cdr accessor)
+                 when (or (and (symbolp accessor-sym) (eq accessor-sym name))
+                          (and (listp accessor-sym) (eq (car accessor-sym) 'setf) (eq (cadr accessor-sym) name)))
+                 do (return-from %annotate-function-info (append fn-info '((:accessorp t))))))
+     finally (return fn-info)))
 #|
 This has to work:
 

@@ -24,7 +24,7 @@
         </ul>
 
         <div id="tabs-functions">
-          <% for functions %>
+          <% for functions if ! accessorp %>
           <h3>
             <div class="typeStyle">
               <% #type %>
@@ -41,7 +41,7 @@
             <% end %>
           </div>
           <hr>
-          <% end %>
+          <% end end %>
         </div>
 
         <div id="tabs-classes">
@@ -61,7 +61,16 @@
             <div>
               <% if slots %>
               <% for slots %>
-              <span class="sourceStyle"><b><% #name %></b><% if accessors %> &#8212; <% #accessors end %></span>
+              <span class="sourceStyle"><b><% #name %></b>
+                <% if accessors %>
+                &#8212;
+                <% for accessors %>
+                <% if reader %>reader <% #reader end %>
+                <% if writer %>writer <% #writer end %>
+                <% if accessor %>accessor <% #accessor end %>
+                <% end #| FOR ACCESSORS |# %>
+                <% end #| IF ACCESSORS |# %>
+              </span>
               <div>
                 <% if documentation %>
                 <blockquote>
@@ -70,7 +79,7 @@
                 <% end %>
               </div>
               <% end %>
-              <% else %>
+              <% else #| has slots |# %>
               No slots
               <% end %>
             </div>

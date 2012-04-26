@@ -69,6 +69,7 @@ or NIL if the information is not available.")
 
 (defparameter *actions*
   (make-lexer-actions ("[ \\n]+" (constantly :blank))
+                      ("#\\|.*?\\|#" (constantly :blank))
                       ("if"     'if)
                       ("else"   'else)
                       ("end"    'end)
@@ -85,6 +86,7 @@ or NIL if the information is not available.")
                       ("\\."    '|.|)
                       ("/"      '|/|)
                       (":"      '|:|)
+                      ("!"      '|!|)
                       ("([a-zA-Z_][a-zA-Z_0-9-]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
                       ("\"((?:(?:\\\\\")|[^\"])*)\"" (lambda (exprs)
                                                        (list 'string (escape-string-slashes (aref exprs 0)))))
@@ -234,7 +236,7 @@ or NIL if the information is not available.")
 
 (short-define-parser *template-parser* ((:start-symbol document)
                                         (:terminals (template symbol string if end else while repeat number for with
-                                                              |,| |=| |(| |)| |@| |#| |.| |/| |:|))
+                                                              |,| |=| |(| |)| |@| |#| |.| |/| |:| |!|))
                                         (:precedence ((:right template))))
                      
   (document
@@ -305,7 +307,9 @@ or NIL if the information is not available.")
    ((|,| symbol) (string->symbol symbol))
    ((string)     string)
    (((|/| v1) interned-symbol (|/| v3) expression)
-    `(funcall ',interned-symbol ,expression)))
+    `(funcall ',interned-symbol ,expression))
+   ((|!| expression)
+    `(not ,expression)))
 
   (expression
    ((data) data))

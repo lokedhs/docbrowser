@@ -26,3 +26,6 @@ After loading the package, run the following command from the REPL:
 
 This will start the docserver on port 8080. A different port number
 can also be given as an optional argument.
+
+To access the docbrowser, point a web browser to
+http://localhost:8080/

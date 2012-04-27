@@ -37,6 +37,7 @@ will make documentation for slots in conditions work properly."
                           (*package* (symbol-package symbol)))
                       (format nil "~{~a~^ ~}" (mapcar #'format-argument-to-string (swank-backend:arglist symbol)))))
         (cons :type (cond ((macro-function symbol) "macro")
+                          ((typep (symbol-function symbol) 'generic-function) "generic function")
                           (t "function")))))
 
 (defun load-variable-info (symbol)

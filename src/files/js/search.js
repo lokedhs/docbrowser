@@ -1,5 +1,4 @@
 function ajaxRequest( url, data, callback ) {
-    console.log( "Sending AJAX request to: " + url + ", data: " + JSON.stringify( data ) );
     $.ajax( {
         type: "POST",
         url: url,
@@ -8,23 +7,50 @@ function ajaxRequest( url, data, callback ) {
         contentType: "application/x-msgpack",
         processData: false,
         success: function( xml ) {
-            console.log( "got response from ajax call. url=" + url + ", data=" + xml );
             callback( xml );
         }
     } );
 }
 
+function handleSearchResult( data ) {
+    var tableBody = $("#results > tbody");
+    tableBody.find( "tr" ).remove();
+    for( var i = 0 ; i < data.length ; i++ ) {
+        var entry = data[i];
+        var row = $("<tr>");
+        row.append( $("<td>").append( entry.name ) );
+        row.append( $("<td>").append( entry.type ) );
+        tableBody.append( row );
+    }
+}
+
+var inProgress = false;
+var pending = false;
+
 function search( text ) {
+    if( inProgress ) {
+        pending = true;
+    }
+    inProgress = true;
+
     var data = { text: text };
     ajaxRequest( "/search_command", data, function( xml ) {
-        console.log( "got result: " + xml );
+        inProgress = false;
+        if( pending ) {
+            pending = false;
+            callback();
+        }
+        else {
+            handleSearchResult( JSON.parse( xml ) );
+        }
     } );
 }
 
 function init() {
-    $("#searchText").change( function() {
-        search( $(this).prop( "value" ) );
-    } );
+    var callback = function() {
+        search( $("#searchText").attr( "value" ) );
+    };
+    $("#searchText").change( callback ).keyup( callback );
 }
 
 $(document).ready( init );

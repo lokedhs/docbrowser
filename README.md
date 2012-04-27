@@ -13,6 +13,11 @@ hosting site:
 
 http://code.google.com/p/docbrowser/
 
+## Compatibility
+
+The application has been tested on SBCL, CCL and CLISP. It should work
+on other 
+
 ## Starting the server
 
 After loading the package, run the following command from the REPL:

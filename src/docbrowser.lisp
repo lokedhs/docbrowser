@@ -47,10 +47,15 @@ will make documentation for slots in conditions work properly."
         (cons :value (when (boundp symbol) (prin1-to-string (symbol-value symbol))))))
 
 (defun find-superclasses (class)
-  (append (loop
-             for parent-class in (closer-mop:class-direct-superclasses class)
-             append (load-specialisation-info parent-class))
-          (list (class-name class))))
+  (labels ((f (classes found)
+             (if (and classes
+                      (not (eq (car classes) (find-class 'standard-object)))
+                      (not (member (car classes) found)))
+                 (f (cdr classes)
+                    (f (closer-mop:class-direct-superclasses (car classes))
+                       (cons (car classes) found)))
+                 found)))
+    (f (list class) nil)))
 
 (defun find-method-info (symbol)
   (list (cons :name (princ-to-string symbol))))

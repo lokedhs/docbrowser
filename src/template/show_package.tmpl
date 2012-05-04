@@ -18,9 +18,13 @@
     <div class="package-list">
       <div id="tabs">
         <ul>
+          <% if functions %>
           <li><a href="#tabs-functions">Functions</a></li>
+          <% end if classes %>
           <li><a href="#tabs-classes">Classes</a></li>
+          <% end if variables %>
           <li><a href="#tabs-variables">Variables</a></li>
+          <% end %>
         </ul>
 
         <div id="tabs-functions">

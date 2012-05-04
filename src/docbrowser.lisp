@@ -171,21 +171,29 @@ will make documentation for slots in conditions work properly."
                  do (return-from %annotate-function-info (append fn-info '((:accessorp t))))))
      finally (return fn-info)))
 
+(defun %show-package-screen-show (out package)
+  (let ((*package* package))
+    (destructuring-bind (functions variables classes)
+        (loop
+           for s being each external-symbol in package
+           when (safe-class-for-symbol s) collect (load-class-info s) into classes
+           when (fboundp s) collect (load-function-info s) into functions
+           when (boundp s) collect (load-variable-info s) into variables
+           finally (return (list (mapcar #'(lambda (fn)
+                                             (%annotate-function-info fn classes))
+                                         functions)
+                                 variables classes)))
+      (show-template out "show_package.tmpl" `((:name      . ,(package-name package))
+                                               (:functions . ,(sort functions #'string< :key #'assoc-name))
+                                               (:variables . ,(sort variables #'string< :key #'assoc-name))
+                                               (:classes   . ,(sort classes #'string< :key #'assoc-name)))))))
+
 (define-handler-fn show-package-screen "/show_package"
   (with-hunchentoot-stream (out)
-    (let* ((package (find-package (hunchentoot:parameter "id")))
-           (*package* package))
-      (destructuring-bind (functions variables classes)
-          (loop
-             for s being each external-symbol in package
-             when (safe-class-for-symbol s) collect (load-class-info s) into classes
-             when (fboundp s) collect (load-function-info s) into functions
-             when (boundp s) collect (load-variable-info s) into variables
-             finally (return (list (mapcar #'(lambda (fn)
-                                               (%annotate-function-info fn classes))
-                                           functions)
-                                   variables classes)))
-        (show-template out "show_package.tmpl" `((:name      . ,(package-name package))
-                                                 (:functions . ,(sort functions #'string< :key #'assoc-name))
-                                                 (:variables . ,(sort variables #'string< :key #'assoc-name))
-                                                 (:classes   . ,(sort classes #'string< :key #'assoc-name))))))))
+    (let* ((package-name (hunchentoot:parameter "id"))
+           (package (find-package package-name)))
+      (if (null package)
+          ;; If the package does not exist, display the error page
+          (show-template out "package_does_not_exist.tmpl" `((:name . ,package-name)))
+          ;; The package does exist, display it
+          (%show-package-screen-show out package)))))

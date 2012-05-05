@@ -10,6 +10,7 @@
 
 (defvar *output-binary* nil)
 (defvar *output-encoding* nil)
+(defvar *subtemplate-list* nil)
 
 (define-condition template-error (error)
   ((line          :type integer
@@ -70,23 +71,25 @@ or NIL if the information is not available.")
 (defparameter *actions*
   (make-lexer-actions ("[ \\n]+" (constantly :blank))
                       ("#\\|.*?\\|#" (constantly :blank))
-                      ("if"     'if)
-                      ("else"   'else)
-                      ("end"    'end)
-                      ("while"  'while)
-                      ("repeat" 'repeat)
-                      ("for"    'for)
-                      ("with"   'with)
-                      (","      '|,|)
-                      ("="      '|=|)
-                      ("\\("    '|(|)
-                      ("\\)"    '|(|)
-                      ("@"      '|@|)
-                      ("#"      '|#|)
-                      ("\\."    '|.|)
-                      ("/"      '|/|)
-                      (":"      '|:|)
-                      ("!"      '|!|)
+                      ("if"       'if)
+                      ("else"     'else)
+                      ("end"      'end)
+                      ("while"    'while)
+                      ("repeat"   'repeat)
+                      ("for"      'for)
+                      ("with"     'with)
+                      ("template" 'deftemplate)
+                      ("call"     'call)
+                      (","        '|,|)
+                      ("="        '|=|)
+                      ("\\("      '|(|)
+                      ("\\)"      '|(|)
+                      ("@"        '|@|)
+                      ("#"        '|#|)
+                      ("\\."      '|.|)
+                      ("/"        '|/|)
+                      (":"        '|:|)
+                      ("!"        '|!|)
                       ("([a-zA-Z_][a-zA-Z_0-9-]*)" (lambda (exprs) (list 'symbol (aref exprs 0))))
                       ("\"((?:(?:\\\\\")|[^\"])*)\"" (lambda (exprs)
                                                        (list 'string (escape-string-slashes (aref exprs 0)))))
@@ -236,6 +239,7 @@ or NIL if the information is not available.")
 
 (short-define-parser *template-parser* ((:start-symbol document)
                                         (:terminals (template symbol string if end else while repeat number for with
+                                                              deftemplate call
                                                               |,| |=| |(| |)| |@| |#| |.| |/| |:| |!|))
                                         (:precedence ((:right template))))
                      
@@ -290,6 +294,17 @@ or NIL if the information is not available.")
                          stream)
         `(princ (escape-string-minimal-plus-quotes (princ-to-string ,data)) stream)))
 
+   ((deftemplate symbol document-nodes end)
+    (let ((function-sym (gensym)))
+      (setf (gethash symbol *subtemplate-list*) (cons function-sym document-nodes))
+      nil))
+
+   ((call symbol)
+    (let ((function-code (gethash symbol *subtemplate-list*)))
+      (unless function-code
+        (signal-template-error (format nil "Attempting to call subtemplate \"~a\" which has not been defined." symbol)))
+      `(,(car function-code))))
+
    )
 
   (else-statement
@@ -329,8 +344,13 @@ or NIL if the information is not available.")
   (let ((*package* (find-package :template-parse))
         (*current-line-num* 0)
         (*output-binary* binary)
-        (*output-encoding* encoding))
-    (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
+        (*output-encoding* encoding)
+        (*subtemplate-list* (make-hash-table :test 'equal)))
+    (let ((form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
+      `(labels ,(loop
+                   for value being each hash-value in *subtemplate-list*
+                   collect `(,(car value) () ,@(cdr value)))
+         ,form))))
 
 (defun parse-template (stream &key binary (encoding :utf-8))
   "Parses and compiles the template defition given as STREAM. If BINARY

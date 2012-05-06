@@ -11,6 +11,7 @@
 (defvar *output-binary* nil)
 (defvar *output-encoding* nil)
 (defvar *subtemplate-list* nil)
+(defvar *include-root-dir* nil)
 
 (define-condition template-error (error)
   ((line          :type integer
@@ -80,6 +81,7 @@ or NIL if the information is not available.")
                       ("with"     'with)
                       ("template" 'deftemplate)
                       ("call"     'call)
+                      ("include"  'include)
                       (","        '|,|)
                       ("="        '|=|)
                       ("\\("      '|(|)
@@ -239,7 +241,7 @@ or NIL if the information is not available.")
 
 (short-define-parser *template-parser* ((:start-symbol document)
                                         (:terminals (template symbol string if end else while repeat number for with
-                                                              deftemplate call
+                                                              deftemplate call include
                                                               |,| |=| |(| |)| |@| |#| |.| |/| |:| |!|))
                                         (:precedence ((:right template))))
                      
@@ -305,7 +307,16 @@ or NIL if the information is not available.")
         (signal-template-error (format nil "Attempting to call subtemplate \"~a\" which has not been defined." symbol)))
       `(,(car function-code))))
 
-   )
+   ((include string)
+    (let ((filename (if *include-root-dir*
+                        (format nil "~a~a" *include-root-dir* string)
+                        string)))
+      (with-open-file (file-in filename :if-does-not-exist nil)
+        (unless file-in
+          (signal-template-error (format nil "Failed to open include file \"~a\", file does not exist." filename)))
+        (inner-parse-stream-to-form file-in))))
+
+   ) ; end of DOCUMENT-NODE
 
   (else-statement
    ((else document-nodes)
@@ -338,21 +349,25 @@ or NIL if the information is not available.")
    (((symbol symbol1))
     (intern (string-upcase symbol1) "CL-USER")))
 
-)
+) ; end of SHORT-DEFINE-PARSER
 
-(defun parse-stream-to-form (stream binary encoding)
+(defun inner-parse-stream-to-form (stream)
   (let ((*package* (find-package :template-parse))
-        (*current-line-num* 0)
-        (*output-binary* binary)
-        (*output-encoding* encoding)
-        (*subtemplate-list* (make-hash-table :test 'equal)))
+        (*current-line-num* 0))
     (let ((form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
       `(labels ,(loop
                    for value being each hash-value in *subtemplate-list*
                    collect `(,(car value) () ,@(cdr value)))
          ,form))))
 
-(defun parse-template (stream &key binary (encoding :utf-8))
+(defun parse-stream-to-form (stream binary encoding include-root-dir)
+  (let ((*output-binary* binary)
+        (*output-encoding* encoding)
+        (*subtemplate-list* (make-hash-table :test 'equal))
+        (*include-root-dir* include-root-dir))
+    (inner-parse-stream-to-form stream)))
+
+(defun parse-template (stream &key binary (encoding :utf-8) include-root-dir)
   "Parses and compiles the template defition given as STREAM. If BINARY
 is NIL, the generated template will output its data as strings \(using
 PRINC), otherwise the output will be converted to binary using the
@@ -363,7 +378,7 @@ encoded during parsing instead of at runtime.
 The return value is a function that takes two arguments, DATA and OUTPUT.
 DATA is the data that will be used by the template, and OUTPUT is the
 output stream to which the result should be written."
-  (let* ((template-form  (parse-stream-to-form stream binary encoding))
+  (let* ((template-form  (parse-stream-to-form stream binary encoding include-root-dir))
          (name (gensym)))
     (compile name `(lambda (data stream)
                      (declare (ignorable data stream))

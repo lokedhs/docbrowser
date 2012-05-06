@@ -40,9 +40,9 @@ occurred. Either the entire line, or part of it.")
                   :initarg :content-index
                   :initform nil
                   :reader template-error-content-index
-                  :documentation "The position in content closest to the actual error"))
-  (:documentation "Error that is raised if there is an error parsing a template,
-or NIL if the information is not available.")
+                  :documentation "The position in content closest to the actual error,
+or NIL if the information is not available."))
+  (:documentation "Error that is raised if there is an error parsing a template")
   (:report (lambda (condition stream)
              (with-slots (line column message content content-index) condition
                (format stream "Line ~a" line)

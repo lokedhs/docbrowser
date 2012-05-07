@@ -240,8 +240,8 @@ or NIL if the information is not available."))
        ,@(mapcar #'process-definition definitions))))
 
 (short-define-parser *template-parser* ((:start-symbol document)
-                                        (:terminals (template symbol string if end else while repeat number for with
-                                                              deftemplate call include
+                                        (:terminals (template symbol string if end else while repeat number
+                                                              for with deftemplate call include
                                                               |,| |=| |(| |)| |@| |#| |.| |/| |:| |!|))
                                         (:precedence ((:right template))))
                      

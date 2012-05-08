@@ -2,8 +2,11 @@
 
 (declaim #.*compile-decl*)
 
-(defvar *begin-code* "<%")
-(defvar *end-code* "%>")
+(defvar *begin-code* "<%"
+  "The string that opens a script segment. The end of a script segment is
+specified by *END-CODE*.")
+(defvar *end-code* "%>"
+  "The string that ends a script segment.")
 
 (defvar *current-line-num* nil
   "Dynamic variable used to track the current line number during parsing")

@@ -9,7 +9,9 @@
    :template-error-column
    :template-error-message
    :template-error-content
-   :template-error-content-index))
+   :template-error-content-index
+   :*begin-code*
+   :*end-code*))
 
 (in-package :docbrowser-template)
 

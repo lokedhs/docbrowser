@@ -353,11 +353,17 @@ or NIL if the information is not available."))
 (defun inner-parse-stream-to-form (stream)
   (let ((*package* (find-package :template-parse))
         (*current-line-num* 0))
-    (let ((form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
-      `(labels ,(loop
-                   for value being each hash-value in *subtemplate-list*
-                   collect `(,(car value) () ,@(cdr value)))
-         ,form))))
+    (handler-case
+        (let ((form (yacc:parse-with-lexer (make-stream-template-lexer stream) *template-parser*)))
+          `(labels ,(loop
+                       for value being each hash-value in *subtemplate-list*
+                       collect `(,(car value) () ,@(cdr value)))
+             ,form))
+      (yacc:yacc-parse-error (condition) (signal-template-error
+                                          (format nil "Parse error: terminal=~s value=~s expected=~s"
+                                                  (yacc:yacc-parse-error-terminal condition)
+                                                  (yacc:yacc-parse-error-value condition)
+                                                  (yacc:yacc-parse-error-expected-terminals condition)))))))
 
 (defun parse-stream-to-form (stream binary encoding include-root-dir)
   (let ((*output-binary* binary)
@@ -384,3 +390,7 @@ output stream to which the result should be written."
                      (let ((*current-content* data))
                        ,template-form)))
     (symbol-function name)))
+
+(defun debug-parser (s)
+  (with-input-from-string (stream s)
+    (parse-stream-to-form stream nil nil nil)))

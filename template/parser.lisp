@@ -380,6 +380,9 @@ encoding specified by ENCODING. The binary output is the preferred
 method as that will allow constant strings in the template to be
 encoded during parsing instead of at runtime.
 
+INCLUDE-ROOT-DIR is used to specify a base directory from where the \"include\"
+command will search for files.
+
 The return value is a function that takes two arguments, DATA and OUTPUT.
 DATA is the data that will be used by the template, and OUTPUT is the
 output stream to which the result should be written."

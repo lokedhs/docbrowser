@@ -291,10 +291,11 @@ or NIL if the information is not available."))
 
    ((|#| data)
     (if *output-binary*
-        `(write-sequence (babel:string-to-octets (escape-string-minimal-plus-quotes (princ-to-string ,data))
+        `(write-sequence (babel:string-to-octets (with-output-to-string (s)
+                                                   (escape-string-minimal-plus-quotes (princ-to-string ,data) s))
                                                  :encoding ,*output-encoding*)
                          stream)
-        `(princ (escape-string-minimal-plus-quotes (princ-to-string ,data)) stream)))
+        `(escape-string-minimal-plus-quotes (princ-to-string ,data) stream)))
 
    ((deftemplate symbol document-nodes end)
     (let ((function-sym (gensym)))

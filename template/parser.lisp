@@ -400,7 +400,7 @@ output stream to which the result should be written."
                                                     stream-sym)))
                          ,template-form
                          (finish-output *current-stream*)))))
-    (print code-form)
+    #+nil(print code-form)
     (compile name code-form)
     (symbol-function name)))
 

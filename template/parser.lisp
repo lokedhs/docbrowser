@@ -389,7 +389,7 @@ command will search for files.
 The return value is a function that takes two arguments, DATA and OUTPUT.
 DATA is the data that will be used by the template, and OUTPUT is the
 output stream to which the result should be written."
-  (let* ((template-form  (parse-stream-to-form stream binary encoding include-root-dir))
+  (let* ((template-form (parse-stream-to-form stream binary encoding include-root-dir))
          (name (gensym))
          (stream-sym (gensym "STREAM-"))
          (data-sym (gensym "DATA-"))

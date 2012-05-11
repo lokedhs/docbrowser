@@ -16,7 +16,8 @@
                :babel
                :closer-mop
                :swank
-               :cl-json)
+               :cl-json
+               :flexi-streams)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

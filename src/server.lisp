@@ -65,7 +65,9 @@ written to."
 (defun show-template (out file data)
   (docbrowser-template:exec-template-file (concatenate 'string *files-base-dir*
                                                        "template/" file)
-                                          data out))
+                                          data out
+                                          :binary t
+                                          :encoding :utf-8))
 
 (defvar *global-acceptor* nil
   "The acceptor for the currently running server.")

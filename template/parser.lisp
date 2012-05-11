@@ -15,6 +15,7 @@ specified by *END-CODE*.")
 (defvar *output-encoding* nil)
 (defvar *subtemplate-list* nil)
 (defvar *include-root-dir* nil)
+(defvar *current-stream* nil "The stream that the template output is written to.")
 
 (define-condition template-error (error)
   ((line          :type integer
@@ -90,7 +91,7 @@ or NIL if the information is not available."))
                       ("\\("      '|(|)
                       ("\\)"      '|(|)
                       ("@"        '|@|)
-                      ("#"        '|#|)
+                      ("([a-z]?)#"    (lambda (exprs) (list 'print (aref exprs 0))))
                       ("\\."      '|.|)
                       ("/"        '|/|)
                       (":"        '|:|)
@@ -244,8 +245,8 @@ or NIL if the information is not available."))
 
 (short-define-parser *template-parser* ((:start-symbol document)
                                         (:terminals (template symbol string if end else while repeat number
-                                                              for with deftemplate call include
-                                                              |,| |=| |(| |)| |@| |#| |.| |/| |:| |!|))
+                                                              for with deftemplate call include print
+                                                              |,| |=| |(| |)| |@| |.| |/| |:| |!|))
                                         (:precedence ((:right template))))
                      
   (document
@@ -269,8 +270,8 @@ or NIL if the information is not available."))
    ((template-list)
     (when (plusp (length template-list))
       (if *output-binary*
-          `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) stream)
-          `(princ ,template-list stream))))
+          `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) *current-stream*)
+          `(princ ,template-list *current-stream*))))
 
    ((if expression document-nodes else-statement end)
     `(if ,expression (progn ,@document-nodes) ,else-statement))
@@ -292,13 +293,12 @@ or NIL if the information is not available."))
           for ,sym in ,data
           do (let ((*current-content* ,sym)) ,@document-nodes))))
 
-   ((|#| data)
-    (if *output-binary*
-        `(write-sequence (babel:string-to-octets (with-output-to-string (s)
-                                                   (escape-string-minimal-plus-quotes (princ-to-string ,data) s))
-                                                 :encoding ,*output-encoding*)
-                         stream)
-        `(escape-string-minimal-plus-quotes (princ-to-string ,data) stream)))
+   (((print modifier) data)
+    (cond ((string= modifier "r")
+           `(princ ,data *current-stream*))
+          ((string= modifier "")
+           `(escape-string-minimal-plus-quotes (princ-to-string ,data) *current-stream*))
+          (t (signal-template-error (format nil "Unknown #-modifier: \"~a\"" modifier)))))
 
    ((deftemplate symbol document-nodes end)
     (let ((function-sym (gensym)))
@@ -390,13 +390,20 @@ The return value is a function that takes two arguments, DATA and OUTPUT.
 DATA is the data that will be used by the template, and OUTPUT is the
 output stream to which the result should be written."
   (let* ((template-form  (parse-stream-to-form stream binary encoding include-root-dir))
-         (name (gensym)))
-    (compile name `(lambda (data stream)
-                     (declare (ignorable data stream))
-                     (let ((*current-content* data))
-                       ,template-form)))
+         (name (gensym))
+         (stream-sym (gensym "STREAM-"))
+         (data-sym (gensym "DATA-"))
+         (code-form `(lambda (,data-sym ,stream-sym)
+                       (let ((*current-content* ,data-sym)
+                             (*current-stream* ,(if binary
+                                                    `(flexi-streams:make-flexi-stream ,stream-sym :external-format ,encoding)
+                                                    stream-sym)))
+                         ,template-form
+                         (finish-output *current-stream*)))))
+    (print code-form)
+    (compile name code-form)
     (symbol-function name)))
 
-(defun debug-parser (s)
+(defun debug-parser (s &optional binary)
   (with-input-from-string (stream s)
-    (parse-stream-to-form stream nil nil nil)))
+    (parse-stream-to-form stream binary :utf-8 nil)))

@@ -24,11 +24,11 @@
 (defvar *cached-templates* (make-hash-table :test 'equal))
 (defvar *cached-templates-lock* (bordeaux-threads:make-lock "cached-templates-lock"))
 
-(defun parse-template-file (pathname)
+(defun parse-template-file (pathname &key binary (encoding :utf-8))
   (with-open-file (s pathname)
-    (parse-template s :binary t)))
+    (parse-template s :binary binary :encoding encoding)))
 
-(defun exec-template-file (file data stream)
+(defun exec-template-file (file data stream &key binary (encoding :utf-8))
   "Load and compile FILE and put it into the template cache if it was not
 already in the cache. Then run the template using DATA and write the
 output to STREAM."
@@ -41,7 +41,9 @@ output to STREAM."
                                             (setf (gethash pathname *cached-templates*)
                                                   (make-instance 'parsed-file
                                                                  :name pathname
-                                                                 :template (parse-template-file pathname))))
+                                                                 :template (parse-template-file pathname
+                                                                                                :binary binary
+                                                                                                :encoding encoding))))
                                            (t
                                             (setf (parsed-file-last-time-check cached) (get-universal-time))
                                             cached)))

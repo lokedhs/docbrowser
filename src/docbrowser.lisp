@@ -44,7 +44,8 @@ will make documentation for slots in conditions work properly."
   (list (cons :name (string symbol))
         (cons :documentation (documentation symbol 'variable))
         (cons :boundp (boundp symbol))
-        (cons :value (when (boundp symbol) (prin1-to-string (symbol-value symbol))))))
+        (cons :value (when (boundp symbol) (prin1-to-string (symbol-value symbol))))
+        (cons :constant-p (constantp symbol))))
 
 (defun find-superclasses (class)
   (labels ((f (classes found)

@@ -109,7 +109,12 @@
         <div id="tabs-variables">
           <% for variables %>
           <h3>
-            <span class="sourceStyle"><b><% #name %></b></span>
+            <div class="typeStyle">
+              <% if constant-p %>constant<% else %>variable<% end %>
+            </div>
+            <div>
+              <span class="sourceStyle"><b><% #name %></b></span>
+            </div>
           </h3>
           <div>
             <div>

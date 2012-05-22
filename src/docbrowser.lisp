@@ -5,11 +5,6 @@
 (define-handler-fn main-screen "/"
   (hunchentoot:redirect "/package_list"))
 
-#+sbcl(defmethod documentation ((slotd sb-pcl::condition-effective-slot-definition) (doc-type (eql 't)))
-        "This method definition is missing in SBCL as of 1.0.55 at least. Adding it here
-will make documentation for slots in conditions work properly."
-        (slot-value slotd 'sb-pcl::%documentation))
-
 (define-handler-fn package-list-screen "/package_list"
   (with-hunchentoot-stream (out)
     (let ((packages (sort (mapcar #'(lambda (package)

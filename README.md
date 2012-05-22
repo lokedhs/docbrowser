@@ -15,8 +15,8 @@ http://code.google.com/p/docbrowser/
 
 ## Compatibility
 
-The application has been tested on SBCL, CCL and CLISP. It should work
-on other 
+The application has been tested on SBCL, CCL and CLISP. Please let me
+know of any issues on other Common Lisp implementations.
 
 ## Starting the server
 

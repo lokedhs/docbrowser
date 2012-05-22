@@ -147,10 +147,10 @@ or NIL if the information is not available."))
 
                  (read-code ()
                    (cond ((and (>= (length current-line)
-                                    (+ current-position (length *end-code*)))
-                                (string= current-line *end-code*
-                                         :start1 current-position
-                                         :end1 (+ current-position (length *end-code*))))
+                                   (+ current-position (length *end-code*)))
+                               (string= current-line *end-code*
+                                        :start1 current-position
+                                        :end1 (+ current-position (length *end-code*))))
                           ;; End code was found
                           (incf current-position (length *end-code*))
                           (setq state :template)

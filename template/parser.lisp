@@ -401,7 +401,6 @@ output stream to which the result should be written."
                               (current-output *current-stream*))
                          ,template-form
                          (finish-output *current-stream*)))))
-    (hunchentoot:log-message* :info "Result: ~s" code-form)
     (compile name code-form)
     (symbol-function name)))
 

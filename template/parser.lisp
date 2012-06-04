@@ -312,7 +312,10 @@ or NIL if the information is not available."))
       `(,(car function-code))))
 
    ((include string)
-    (let ((filename (format nil "~a~a" (or *include-root-dir* "") string)))
+    (let* ((file-base (pathname string))
+           (filename (if *include-root-dir*
+                        (merge-pathnames file-base *include-root-dir*)
+                        file-base)))
       (with-open-file (file-in filename :if-does-not-exist nil)
         (unless file-in
           (signal-template-error (format nil "Failed to open include file \"~a\", file does not exist." filename)))

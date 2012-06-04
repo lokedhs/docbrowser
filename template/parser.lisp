@@ -270,8 +270,8 @@ or NIL if the information is not available."))
    ((template-list)
     (when (plusp (length template-list))
       (if *output-binary*
-          `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) *current-stream*)
-          `(princ ,template-list *current-stream*))))
+          `(write-sequence ,(babel:string-to-octets template-list :encoding *output-encoding*) current-output)
+          `(princ ,template-list current-output))))
 
    ((if expression document-nodes else-statement end)
     `(if ,expression (progn ,@document-nodes) ,else-statement))
@@ -295,9 +295,9 @@ or NIL if the information is not available."))
 
    (((print modifier) data)
     (cond ((string= modifier "r")
-           `(princ ,data *current-stream*))
+           `(princ ,data current-output))
           ((string= modifier "")
-           `(escape-string-minimal-plus-quotes (princ-to-string ,data) *current-stream*))
+           `(escape-string-minimal-plus-quotes (princ-to-string ,data) current-output))
           (t (signal-template-error (format nil "Unknown #-modifier: \"~a\"" modifier)))))
 
    ((deftemplate symbol document-nodes end)
@@ -394,13 +394,14 @@ output stream to which the result should be written."
          (stream-sym (gensym "STREAM-"))
          (data-sym (gensym "DATA-"))
          (code-form `(lambda (,data-sym ,stream-sym)
-                       (let ((*current-content* ,data-sym)
-                             (*current-stream* ,(if binary
-                                                    `(flexi-streams:make-flexi-stream ,stream-sym :external-format ,encoding)
-                                                    stream-sym)))
+                       (let* ((*current-content* ,data-sym)
+                              (*current-stream* ,(if binary
+                                                     `(flexi-streams:make-flexi-stream ,stream-sym :external-format ,encoding)
+                                                     stream-sym))
+                              (current-output *current-stream*))
                          ,template-form
                          (finish-output *current-stream*)))))
-    #+nil(print code-form)
+    (hunchentoot:log-message* :info "Result: ~s" code-form)
     (compile name code-form)
     (symbol-function name)))
 

@@ -11,7 +11,8 @@
    :template-error-content
    :template-error-content-index
    :*begin-code*
-   :*end-code*))
+   :*end-code*
+   :*current-content*))
 
 (in-package :docbrowser-template)
 

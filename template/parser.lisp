@@ -312,10 +312,7 @@ or NIL if the information is not available."))
       `(,(car function-code))))
 
    ((include string)
-    (let* ((file-base (pathname string))
-           (filename (if *include-root-dir*
-                        (merge-pathnames file-base *include-root-dir*)
-                        file-base)))
+    (let ((filename (merge-pathnames (pathname string) *include-root-dir*)))
       (with-open-file (file-in filename :if-does-not-exist nil)
         (unless file-in
           (signal-template-error (format nil "Failed to open include file \"~a\", file does not exist." filename)))
@@ -375,7 +372,7 @@ or NIL if the information is not available."))
   (let ((*output-binary* binary)
         (*output-encoding* encoding)
         (*subtemplate-list* (make-hash-table :test 'equal))
-        (*include-root-dir* include-root-dir))
+        (*include-root-dir* (or include-root-dir *default-pathname-defaults*)))
     (inner-parse-stream-to-form stream)))
 
 (defun parse-template (stream &key binary (encoding :utf-8) include-root-dir)

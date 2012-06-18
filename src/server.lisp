@@ -76,7 +76,9 @@ written to."
   "Start the documentation server with a HTTP listener on port PORT."
   (when *global-acceptor*
     (error "Server is already running"))
-    (hunchentoot:start (setq *global-acceptor* (make-instance 'docbrowser-acceptor :port port)))
+  (let ((a (make-instance 'docbrowser-acceptor :port port)))
+    (hunchentoot:start a)
+    (setq *global-acceptor* a))
   (setq hunchentoot:*show-lisp-errors-p* t)
   (setq hunchentoot:*log-lisp-warnings-p* t)
   (setq hunchentoot:*log-lisp-backtraces-p* t)

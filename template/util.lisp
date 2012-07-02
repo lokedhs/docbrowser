@@ -50,12 +50,6 @@
   "Like ESCAPE-STRING-MINIMAL but also escapes quotes."
   (escape-string string s :test #'(lambda (char) (find char "<>&'\""))))
 
-(defun escape-string-iso-8859-1 (string s)
-  "Escapes all characters in STRING which aren't defined in ISO-8859-1."
-  (escape-string string s :test #'(lambda (char)
-                                    (or (find char "<>&'\"")
-                                        (> (char-code char) 255)))))
-
 (defun escape-string-all (string s)
   "Escapes all characters in STRING which aren't in the 7-bit ASCII
 character set."

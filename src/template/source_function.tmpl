@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Function <% #name %></title>
+    <link rel="stylesheet" type="text/css" href="/css/ui-lightness/jquery-ui-1.8.20.custom.css">
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
+    <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui-1.8.20.custom.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.multi-accordion-1.5.3.js"></script>
+    <script type="text/javascript" src="/js/show_package.js"></script>
+  </head>
+  <body>
+    <% r#code %>
+
+    <script type="text/javascript">
+      document.location.hash = "l<% #line %>";
+    </script>
+  </body>
+</html>

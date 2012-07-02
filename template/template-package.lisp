@@ -12,7 +12,11 @@
    :template-error-content-index
    :*begin-code*
    :*end-code*
-   :*current-content*))
+   :*current-content*
+   :escape-string
+   :escape-string-minimal
+   :escape-string-minimal-plus-quotes
+   :escape-string-all))
 
 (in-package :docbrowser-template)
 

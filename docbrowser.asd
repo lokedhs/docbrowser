@@ -31,4 +31,5 @@
                                      (:file "misc")
                                      (:file "server")
                                      (:file "docbrowser")
-                                     (:file "search")))))
+                                     (:file "search")
+                                     (:file "source-function")))))

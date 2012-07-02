@@ -1,0 +1,49 @@
+.source-style {
+    font-family: Monospace;
+}
+
+.type-style {
+    font-family: Monospace;
+    font-size: 10px;
+}
+
+h3 {
+    font-weight: normal;
+}
+
+.source-link {
+    text-decoration: none;
+}
+
+.code-line {
+}
+
+.number-col {
+    font-family: Monospace;
+    float: left;
+    width: 3em;
+    text-align: right;
+    margin-right: 5px;
+}
+
+.number-col a {
+    text-decoration: none;
+    color: #0000ff;
+}
+
+.code-col {
+    font-family: Monospace;
+    white-space: pre-wrap;
+}
+/*
+    <!--
+                The results have the following form:
+
+                <div class="defect-result-row-outer">
+                    <div class="defect-result-row-inner">
+                        <span class="defect-result-id">ID</span>
+                        <span class="defect-result-subject">Description</span>
+                    </div>
+                </div>
+            -->
+*/

@@ -18,7 +18,8 @@
                :swank
                :cl-json
                :flexi-streams
-               :colorize)
+               :colorize
+               :split-sequence)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

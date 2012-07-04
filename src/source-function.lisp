@@ -2,14 +2,58 @@
 
 (declaim #.*compile-decl*)
 
+(defun read-file-content (file)
+  (with-open-file (in file)
+    (with-output-to-string (out)
+      (loop
+         with buf = (make-array 1024 :element-type 'character)
+         for length = (read-sequence buf in)
+         do (when (plusp length) (write-sequence buf out :end length))
+         until (< length (array-dimension buf 0))))))
+
+(defun style-from-type (type)
+  (cond ((member :symbol type)  "lisp-symbol-class")
+        ((member :string type)  "lisp-string-class")
+        ((member :comment type) "lisp-comment-class")
+        (t                      "lisp-normal-class")))
+
+(defun escape-char (ch)
+  (case ch
+    (#\& "&amp;")
+    (#\< "&lt;")
+    (#\> "&gt;")
+    (t   (string ch))))
+
 (defun format-source (source-descriptor)
   (let* ((file (cadr (assoc :file source-descriptor)))
          (target-position (cadr (assoc :position source-descriptor))))
-    (loop
-       with current-position = 0
-       with current-line
-       for v in (colorize:scan-string (read-file-content file))
-         )))
+    (let ((target-found-row nil)
+          (current-line 1))
+      (let ((code
+             (with-output-to-string (out)
+               (flet ((start-line ()
+                        (format out "<div class=\"code-line\"><a target=\"~a\"></a><a href=\"#~a\">~a</a><span class=\"code-col\">"
+                                current-line current-line current-line))
+                      (end-line ()
+                        (format out "</span></div>~%")))
+                 (start-line)
+                 (loop
+                    with current-position = 0
+                    for v in (colorize:scan-string :lisp (read-file-content file))
+                    do (format out "<span class=\"~a\">" (style-from-type (car v)))
+                    do (loop
+                          for ch across (cdr v)
+                          do (incf current-position)
+                          when (and (not target-found-row) (> current-position target-position))
+                          do (setf target-found-row current-line)
+                          do (cond ((char= ch #\Newline)
+                                    (incf current-line)
+                                    (end-line)
+                                    (start-line))
+                                   (t
+                                    (write-string (escape-char ch) out)))))
+                 (end-line)))))
+        (values code target-found-row)))))
 
 (define-handler-fn source-function-screen "/source_function"
   (with-hunchentoot-stream (out)

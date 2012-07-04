@@ -47,3 +47,18 @@ h3 {
                 </div>
             -->
 */
+
+.lisp-symbol-class {
+}
+
+.lisp-string-class {
+    color: #00b000;
+}
+
+.lisp-normal-class {
+}
+
+.lisp-comment-class {
+    color: #787878;
+    font-style: italic;
+}

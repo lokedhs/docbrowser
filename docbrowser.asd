@@ -17,7 +17,8 @@
                :closer-mop
                :swank
                :cl-json
-               :flexi-streams)
+               :flexi-streams
+               :colorize)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

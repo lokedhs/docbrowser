@@ -15,6 +15,20 @@ h3 {
     text-decoration: none;
 }
 
+.source-table tr td {
+    font-family: Monospace;
+    white-space: pre-wrap;
+}
+
+.source-table tr td:first-child {
+    text-align: right;
+    vertical-align: top;
+}
+
+.source-table tr:nth-child(odd) {
+    background: #f8f8f8;
+}
+
 .code-line {
 }
 
@@ -52,13 +66,13 @@ h3 {
 }
 
 .lisp-string-class {
-    color: #00b000;
+    color: #00a000;
 }
 
 .lisp-normal-class {
 }
 
 .lisp-comment-class {
-    color: #787878;
+    color: #505050;
     font-style: italic;
 }

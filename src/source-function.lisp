@@ -33,14 +33,14 @@
       (let ((code
              (with-output-to-string (out)
                (flet ((start-line ()
-                        (format out "<div class=\"code-line\"><a name=\"~a\"></a><a href=\"#~a\">~a</a><span class=\"code-col\">"
+                        (format out "<tr><td><a name=\"~a\"></a><a href=\"#~a\">~a</a></td><td>"
                                 current-line current-line current-line))
 
                       (end-line ()
                         (when current-style
                           (format out "</span>")
                           (setq current-style nil))
-                        (format out "</span></div>~%")))
+                        (format out "</td></tr>~%")))
 
                  (start-line)
                  (loop

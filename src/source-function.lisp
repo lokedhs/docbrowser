@@ -28,19 +28,27 @@
   (let* ((file (cadr (assoc :file source-descriptor)))
          (target-position (cadr (assoc :position source-descriptor))))
     (let ((target-found-row nil)
-          (current-line 1))
+          (current-line 1)
+          (current-style nil))
       (let ((code
              (with-output-to-string (out)
                (flet ((start-line ()
-                        (format out "<div class=\"code-line\"><a target=\"~a\"></a><a href=\"#~a\">~a</a><span class=\"code-col\">"
+                        (format out "<div class=\"code-line\"><a name=\"~a\"></a><a href=\"#~a\">~a</a><span class=\"code-col\">"
                                 current-line current-line current-line))
+
                       (end-line ()
+                        (when current-style
+                          (format out "</span>")
+                          (setq current-style nil))
                         (format out "</span></div>~%")))
+
                  (start-line)
                  (loop
                     with current-position = 0
+
                     for v in (colorize:scan-string :lisp (read-file-content file))
-                    do (format out "<span class=\"~a\">" (style-from-type (car v)))
+                    for style-type = (style-from-type (car v))
+
                     do (loop
                           for ch across (cdr v)
                           do (incf current-position)
@@ -51,6 +59,11 @@
                                     (end-line)
                                     (start-line))
                                    (t
+                                    (unless (equal style-type current-style)
+                                      (when current-style
+                                        (format out "</span>"))
+                                      (setq current-style style-type)
+                                      (format out "<span class=\"~a\">" current-style))
                                     (write-string (escape-char ch) out)))))
                  (end-line)))))
         (values code target-found-row)))))

@@ -12,8 +12,7 @@
    :template-error-content-index
    :*begin-code*
    :*end-code*
-   :*current-content*
-   :escape-string
+   :*current-content* 
    :escape-string-minimal
    :escape-string-minimal-plus-quotes
    :escape-string-all))

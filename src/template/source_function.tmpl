@@ -10,10 +10,14 @@
     <script type="text/javascript" src="/js/show_package.js"></script>
   </head>
   <body>
-    <% r#code %>
+    <table class="source-table">
+      <tbody>
+        <% r#code %>
+      </tbody>
+    </table>
 
     <script type="text/javascript">
-      document.location.hash = "l<% #line %>";
+      document.location.hash = "<% #line %>";
     </script>
   </body>
 </html>

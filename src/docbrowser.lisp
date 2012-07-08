@@ -171,7 +171,10 @@
   (let ((*package* package))
     (destructuring-bind (functions variables classes)
         (loop
-           for s being each external-symbol in package
+           for s in (loop
+                       for symbol being each external-symbol in package
+                       when (eq (symbol-package symbol) package)
+                       collect symbol)
            when (safe-class-for-symbol s) collect (load-class-info s) into classes
            when (fboundp s) collect (load-function-info s) into functions
            when (boundp s) collect (load-variable-info s) into variables

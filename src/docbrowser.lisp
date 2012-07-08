@@ -2,6 +2,9 @@
 
 (declaim #.*compile-decl*)
 
+(defpackage docbrowser-empty
+  (:documentation "Empty package that is used internally by Docbrowser"))
+
 (define-handler-fn main-screen "/"
   (hunchentoot:redirect "/package_list"))
 

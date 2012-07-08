@@ -3,15 +3,11 @@
   <head>
     <title>Package <% #name %></title>
     <link rel="stylesheet" type="text/css" href="/css/ui-lightness/jquery-ui-1.8.20.custom.css">
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
     <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
     <script type="text/javascript" src="/js/jquery-ui-1.8.20.custom.min.js"></script>
     <script type="text/javascript" src="/js/jquery.multi-accordion-1.5.3.js"></script>
     <script type="text/javascript" src="/js/show_package.js"></script>
-    <style>
-      .sourceStyle { font-family: Monospace; }
-      .typeStyle { font-family: Monospace; font-size: 10px; }
-      h3 { font-weight: normal }
-    </style>
   </head>
   <body>
     <div class="package-list">
@@ -29,11 +25,11 @@
         <div id="tabs-functions">
           <% for functions if ! accessorp %>
           <h3>
-            <div class="typeStyle">
+            <div class="type-style">
               <% #type %>
             </div>
             <div>
-              <span class="sourceStyle"><b><% #name %></b> <% #args %></span>
+              <span class="source-style"><b><a class="source-link" href="/source_function?p=<% #/package-name//symbol-package/name %>&n=<% #name %>"><% #name %></a></b> <% #args %></span>
             </div>
           </h3>
           <div>
@@ -50,7 +46,7 @@
         <div id="tabs-classes">
           <% for classes %>
           <h3>
-            <span class="sourceStyle"><b><% #name %></b></span>
+            <span class="source-style"><b><% #name %></b></span>
           </h3>
 
           <% if documentation %>
@@ -64,7 +60,7 @@
             <div>
               <% if slots %>
               <% for slots %>
-              <span class="sourceStyle"><b><% #name %></b>
+              <span class="source-style"><b><% #name %></b>
                 <% if accessors %>
                 &#8212;
                 <% for accessors %>
@@ -92,7 +88,7 @@
               <% if methods %>
               <% for methods %>
               <div>
-                <span class="sourceStyle"><% #name %></span>
+                <span class="source-style"><% #name %></span>
               </div>
               <% end %>
               <% else %>
@@ -109,17 +105,17 @@
         <div id="tabs-variables">
           <% for variables %>
           <h3>
-            <div class="typeStyle">
+            <div class="type-style">
               <% if constant-p %>constant<% else %>variable<% end %>
             </div>
             <div>
-              <span class="sourceStyle"><b><% #name %></b></span>
+              <span class="source-style"><b><% #name %></b></span>
             </div>
           </h3>
           <div>
             <div>
               <% if boundp %>
-              Value: <span class="sourceStyle"><% #value %></span>
+              Value: <span class="source-style"><% #value %></span>
               <% else %>
               Not bound
               <% end %>

@@ -1,0 +1,78 @@
+.source-style {
+    font-family: Monospace;
+}
+
+.type-style {
+    font-family: Monospace;
+    font-size: 10px;
+}
+
+h3 {
+    font-weight: normal;
+}
+
+.source-link {
+    text-decoration: none;
+}
+
+.source-table tr td {
+    font-family: Monospace;
+    white-space: pre-wrap;
+}
+
+.source-table tr td:first-child {
+    text-align: right;
+    vertical-align: top;
+}
+
+.source-table tr:nth-child(odd) {
+    background: #f8f8f8;
+}
+
+.code-line {
+}
+
+.number-col {
+    font-family: Monospace;
+    float: left;
+    width: 3em;
+    text-align: right;
+    margin-right: 5px;
+}
+
+.number-col a {
+    text-decoration: none;
+    color: #0000ff;
+}
+
+.code-col {
+    font-family: Monospace;
+    white-space: pre-wrap;
+}
+/*
+    <!--
+                The results have the following form:
+
+                <div class="defect-result-row-outer">
+                    <div class="defect-result-row-inner">
+                        <span class="defect-result-id">ID</span>
+                        <span class="defect-result-subject">Description</span>
+                    </div>
+                </div>
+            -->
+*/
+
+.lisp-symbol-class {
+}
+
+.lisp-string-class {
+    color: #00a000;
+}
+
+.lisp-normal-class {
+}
+
+.lisp-comment-class {
+    color: #505050;
+    font-style: italic;
+}

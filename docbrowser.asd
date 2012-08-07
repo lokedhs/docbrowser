@@ -19,7 +19,8 @@
                :cl-json
                :flexi-streams
                :colorize
-               :split-sequence)
+               :split-sequence
+               :string-case)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

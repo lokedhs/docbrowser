@@ -8,10 +8,9 @@ Elias Mårtenson
 
 ## Source code repository location
 
-The latest version of Docbrowser can be found at Google Code project
-hosting site:
+The latest version of Docbrowser can be found at Github:
 
-http://code.google.com/p/docbrowser/
+https://github.com/lokedhs/docbrowser
 
 ## Compatibility
 

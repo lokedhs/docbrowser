@@ -57,7 +57,7 @@
     (f (list class) nil)))
 
 (defun find-method-info (symbol)
-  (list (cons :name (princ-to-string symbol))))
+  (list (cons :name symbol)))
 
 (defun safe-class-for-symbol (symbol)
   (handler-case

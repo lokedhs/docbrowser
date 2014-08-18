@@ -20,7 +20,8 @@
                :flexi-streams
                :colorize
                :split-sequence
-               :string-case)
+               :string-case
+               :alexandria)
   :components ((:module template
                         :serial t
                         :components ((:file "template-package")

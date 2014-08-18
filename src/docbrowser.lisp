@@ -75,12 +75,12 @@
          (class (if (symbolp class-name) (find-class class-name) class-name))
          (spec (swank-backend:who-specializes class)))
     (unless (eq spec :not-implemented)
-      (sort (print (loop
-                      for v in spec
-                      for symbol = (specialise->symbol v)
-                      when (and (not (member symbol ignored))
-                                (symbol-external-p symbol (symbol-package (class-name class))))
-                      collect (list (cons :name symbol))))
+      (sort (loop
+               for v in spec
+               for symbol = (specialise->symbol v)
+               when (and (not (member symbol ignored))
+                         (symbol-external-p symbol (symbol-package (class-name class))))
+               collect (list (cons :name symbol)))
             #'string< :key (alexandria:compose #'princ-to-string #'assoc-name)))))
 
 (defun %ensure-external (symbol)

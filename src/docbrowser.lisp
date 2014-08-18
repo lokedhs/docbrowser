@@ -70,8 +70,6 @@
     #+ccl((ccl::reader-method) (cadr (assoc :method (cdar spec))))
     (t nil)))
 
-;;; Causes an error while rendering the package info:
-;;;<span class="source-style"><b><a class="source-link" href="/source_function?p=<% #/package-name//symbol-package/name %>&n=<% #name %>"><% #name %></a></b></span>
 (defun load-specialisation-info (class-name)
   (let* ((ignored '(initialize-instance))
          (class (if (symbolp class-name) (find-class class-name) class-name))

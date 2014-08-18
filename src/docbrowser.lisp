@@ -56,9 +56,6 @@
                  found)))
     (f (list class) nil)))
 
-(defun find-method-info (symbol)
-  (list (cons :name symbol)))
-
 (defun safe-class-for-symbol (symbol)
   (handler-case
       (find-class symbol)
@@ -73,18 +70,20 @@
     #+ccl((ccl::reader-method) (cadr (assoc :method (cdar spec))))
     (t nil)))
 
+;;; Causes an error while rendering the package info:
+;;;<span class="source-style"><b><a class="source-link" href="/source_function?p=<% #/package-name//symbol-package/name %>&n=<% #name %>"><% #name %></a></b></span>
 (defun load-specialisation-info (class-name)
   (let* ((ignored '(initialize-instance))
          (class (if (symbolp class-name) (find-class class-name) class-name))
          (spec (swank-backend:who-specializes class)))
     (unless (eq spec :not-implemented)
-      (sort (loop
-               for v in spec
-               for symbol = (specialise->symbol v)
-               when (and (not (member symbol ignored))
-                         (symbol-external-p symbol (symbol-package (class-name class))))
-               collect (find-method-info symbol))
-            #'string< :key #'assoc-name))))
+      (sort (print (loop
+                      for v in spec
+                      for symbol = (specialise->symbol v)
+                      when (and (not (member symbol ignored))
+                                (symbol-external-p symbol (symbol-package (class-name class))))
+                      collect (list (cons :name symbol))))
+            #'string< :key (alexandria:compose #'princ-to-string #'assoc-name)))))
 
 (defun %ensure-external (symbol)
   (let ((name (cond ((symbolp symbol)

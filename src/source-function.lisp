@@ -1,7 +1,5 @@
 (in-package :docbrowser)
 
-(declaim #.*compile-decl*)
-
 (defun read-file-content (file)
   (with-open-file (in file)
     (with-output-to-string (out)

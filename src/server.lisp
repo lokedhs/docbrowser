@@ -1,7 +1,5 @@
 (in-package :docbrowser)
 
-(declaim #.*compile-decl*)
-
 (defparameter *files-base-dir*
   (format nil "~asrc/" (namestring (asdf:component-pathname (asdf:find-system :docbrowser)))))
 

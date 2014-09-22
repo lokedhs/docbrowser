@@ -1,7 +1,5 @@
 (in-package :docbrowser)
 
-(declaim #.*compile-decl*)
-
 (defpackage docbrowser-empty
   (:documentation "Empty package that is used internally by Docbrowser"))
 

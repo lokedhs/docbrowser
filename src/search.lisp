@@ -1,7 +1,5 @@
 (in-package :docbrowser)
 
-(declaim #.*compile-decl*)
-
 (defvar *maximum-search-results* 100
   "The maximum number of search results returned.")
 

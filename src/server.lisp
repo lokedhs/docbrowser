@@ -83,3 +83,9 @@ written to."
   (setf (hunchentoot:acceptor-access-log-destination *global-acceptor*) (make-broadcast-stream))
   (format t "Docserver started on port ~a" port)
   (values))
+
+(defun stop-docserver ()
+  "Stop the documentation server."
+  (unless *global-acceptor*
+    (error "Server is not running"))
+  (hunchentoot:stop *global-acceptor*))

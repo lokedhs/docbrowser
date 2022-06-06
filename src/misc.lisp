@@ -23,7 +23,7 @@ the CADR of the list."
                                                    ((eq (car symbol) 'setf)
                                                     (cadr symbol))
                                                    (t
-                                                    (error "Unknown symbol type: ~s" symbol))))
+                                                    (warn "Unknown symbol type: ~s" symbol))))
                                 package))
       :external))
 

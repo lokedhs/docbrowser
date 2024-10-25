@@ -31,6 +31,13 @@ can also be given with an optional `:port` argument.
 To access the docbrowser, point a web browser to
 http://localhost:8080/
 
+To restrict docbrowser to localhost requests, or changing the used port to 5432, you can start it with following command from the REPL:
+
+```lisp
+(docbrowser:start-docserver :port 5432 :address "127.0.0.1")
+```
+
+
 The main page presents a list of all the available packages. You can
 click on one to see its functions and variables, with their
 docstrings. You can also go to a function's source.

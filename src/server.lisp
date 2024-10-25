@@ -88,4 +88,5 @@ written to."
   "Stop the documentation server."
   (unless *global-acceptor*
     (error "Server is not running"))
-  (hunchentoot:stop *global-acceptor*))
+  (hunchentoot:stop *global-acceptor*)
+  (setf *global-acceptor* nil)

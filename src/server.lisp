@@ -70,18 +70,19 @@ written to."
 (defvar *global-acceptor* nil
   "The acceptor for the currently running server.")
 
-(defun start-docserver (&optional (port 8080))
-  "Start the documentation server with a HTTP listener on port PORT."
+(defun start-docserver (&key (port 8080) (address nil))
+  "Start the documentation server with a HTTP listener on port PORT.
+parameter ADDRESS restricts server listening to IP address"
   (when *global-acceptor*
     (error "Server is already running"))
-  (let ((a (make-instance 'docbrowser-acceptor :port port)))
+  (let ((a (make-instance 'docbrowser-acceptor :port port :address address)))
     (hunchentoot:start a)
     (setq *global-acceptor* a))
   (setq hunchentoot:*show-lisp-errors-p* t)
   (setq hunchentoot:*log-lisp-warnings-p* t)
   (setq hunchentoot:*log-lisp-backtraces-p* t)
   (setf (hunchentoot:acceptor-access-log-destination *global-acceptor*) (make-broadcast-stream))
-  (format t "Docserver started on port ~a" port)
+  (format t "Docserver started on port ~a; listening to IP ~a" port (or address 'any))
   (values))
 
 (defun stop-docserver ()
@@ -89,4 +90,4 @@ written to."
   (unless *global-acceptor*
     (error "Server is not running"))
   (hunchentoot:stop *global-acceptor*)
-  (setf *global-acceptor* nil)
+  (setf *global-acceptor* nil))
